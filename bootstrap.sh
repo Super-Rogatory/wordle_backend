@@ -12,6 +12,7 @@ fi
 # make sure to install sqlite-utils -> pip install sqlite-utils
 sqlite-utils create-database word_list.db 
 sqlite-utils create-database answers.db
+
 # run python file to convert word_list.txt to json file for database
 python3 convert_word_list_to_python.py
 if test `find "word_list.json"`
@@ -20,6 +21,10 @@ then
 fi
 # at this point we should have a usable json file for the word list.
 rm word_list.txt
+
+# inserts all of the rows from our word_list.json into the table. NOTE: CREATE TABLE words (id INTEGER PRIMARY KEY, name VARCHAR(5)); to create table for word_list.
+sqlite-utils insert word_list.db words word_list.json --pk=id
+# sqlite3 word_list.db => SELECT * FROM words. to check out table.
 
 # SQL statements to populate db | edit .txt to be a .csv file with a few modifications.
 # sqlite-utils bulk chickens.db \
