@@ -13,22 +13,31 @@ fi
 sqlite-utils create-database word_list.db 
 sqlite-utils create-database answers.db
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# FOR WORD LIST
 # run python file to convert word_list.txt to json file for database
-python3 convert_word_list_to_python.py
+python3 convert_list_to_json.py word_list
 if test `find "word_list.json"`
 then
-    echo "Created JSON File - now deleting txt file."
+    echo "Created JSON File for word_list - now deleting txt file."
 fi
+
 # at this point we should have a usable json file for the word list.
 rm word_list.txt
 
 # inserts all of the rows from our word_list.json into the table. NOTE: CREATE TABLE words (id INTEGER PRIMARY KEY, name VARCHAR(5)); to create table for word_list.
-sqlite-utils insert word_list.db words word_list.json --pk=id
-# sqlite3 word_list.db => SELECT * FROM words. to check out table.
+sqlite-utils insert word_list.db words word_list.json --pk=id # sqlite3 word_list.db => SELECT * FROM words. to check out table.
 
-# SQL statements to populate db | edit .txt to be a .csv file with a few modifications.
-# sqlite-utils bulk chickens.db \
-#   'insert into chickens (id, name) values (:id, :name)' \
-#   chickens.csv --csv
+# ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# sqlite3 answers.db
+# FOR ANSWER LIST
+curl --silent https://www.nytimes.com/games/wordle/main.bfba912f.js | sed -e 's/^.*var Ma=//' -e 's/,Oa=.*$//' -e 1q > answers.txt
+python3 convert_list_to_json.py answers
+if test `find "answers.json"`
+then
+    echo "Created JSON File for answers - now deleting txt file."
+fi
+
+# at this point we should have a usable json file for the answer list.
+rm answers.txt
