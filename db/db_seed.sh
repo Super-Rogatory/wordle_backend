@@ -41,3 +41,4 @@ fi
 
 # at this point we should have a usable json file for the answer list.
 rm answers.txt
+sqlite-utils insert answers.db answers answers.json --pk=id # sqlite3 word_list.db => SELECT * FROM words. to check out table.
