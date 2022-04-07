@@ -25,10 +25,18 @@ async def check_word(name: str):
 @app.post("/validation/addword", status_code=201)
 async def add_word(name: str):
     # if length does not match five-letter requirement - raise error
-    if len(name) != 5:
+    if len(name.strip()) != 5:
         raise HTTPException(
             status_code=400, detail="Malformed request syntax - check length of word."
         )
+    # checks to see if word is already in the database - if it is return 400 status code
+    c.execute("SELECT DISTINCT * FROM words WHERE name=:name LIMIT 1", {"name": name})
+    doesWordExist = len(c.fetchall()) > 0
+    if doesWordExist == True:
+        raise HTTPException(
+            status_code=400, detail="Word already exists in the database."
+        )
+    # if all goes well - continue here.
     # query to get highest id.
     c.execute("SELECT id FROM words ORDER BY id DESC LIMIT 1")
     maxId = c.fetchone()[0]  # rip value from query
@@ -44,4 +52,4 @@ async def add_word(name: str):
 async def remove_word(name: str):
     c.execute("DELETE FROM words WHERE name=:name", {"name": name})
     conn.commit()
-    return None
+    return {"ok": True}
