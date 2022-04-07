@@ -26,7 +26,7 @@ fi
 # at this point we should have a usable json file for the word list.
 rm word_list.txt
 
-# inserts all of the rows from our word_list.json into the table. NOTE: CREATE TABLE words (id INTEGER PRIMARY KEY, name VARCHAR(5)); to create table for word_list.
+# inserts all of the rows from our word_list.json into the table. 
 sqlite-utils insert word_list.db words word_list.json --pk=id # sqlite3 word_list.db => SELECT * FROM words. to check out table.
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
