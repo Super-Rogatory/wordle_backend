@@ -3,4 +3,3 @@
 
 checkings: uvicorn --env-file ".env" --port $CHECKING_PORT --app-dir="./api" checking_service:app --reload
 validations: uvicorn --env-file ".env" --port $VALIDATION_PORT --app-dir="./api" validation_service:app --reload
-test: uvicorn --env-file ".env" --port $VALIDATION_PORT --app-dir="./api" test:app --reload

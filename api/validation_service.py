@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from utils import start_connection
 
 app = FastAPI()
@@ -15,8 +15,33 @@ async def root():
 
 @app.post("/validation/checkword")
 async def check_word(name: str):
-    c.execute("SELECT * FROM words WHERE name=:name", {"name": name})
+    c.execute("SELECT DISTINCT * FROM words WHERE name=:name LIMIT 1", {"name": name})
     isValid = len(c.fetchall())  # returns 0 or 1 depending on if word exists.
     status = str(isValid == 1)  # string True or False
     conn.commit()
     return {"isValidWord": status}
+
+
+@app.post("/validation/addword", status_code=201)
+async def add_word(name: str):
+    # if length does not match five-letter requirement - raise error
+    if len(name) != 5:
+        raise HTTPException(
+            status_code=400, detail="Malformed request syntax - check length of word."
+        )
+    # query to get highest id.
+    c.execute("SELECT id FROM words ORDER BY id DESC LIMIT 1")
+    maxId = c.fetchone()[0]  # rip value from query
+    obj = {"id": maxId + 1, "name": name}
+    c.execute(
+        "INSERT INTO words VALUES(:id, :name)", {"id": obj["id"], "name": obj["name"]}
+    )
+    conn.commit()
+    return {"word": obj}
+
+
+@app.delete("/validation/removeword", status_code=204)
+async def remove_word(name: str):
+    c.execute("DELETE FROM words WHERE name=:name", {"name": name})
+    conn.commit()
+    return None
