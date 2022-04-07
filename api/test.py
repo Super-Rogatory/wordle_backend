@@ -1,5 +1,3 @@
-from unittest import result
-from urllib.request import Request
 from fastapi import FastAPI
 from utils import start_connection
 
@@ -15,15 +13,11 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/test")
-async def getAll():
-    c.execute("SELECT * FROM words;")
-    results = c.fetchall()
+@app.post("/validation/checkword")
+async def check_word(name: str):
+    print(name)
+    c.execute("SELECT * FROM words WHERE name=:name", {"name": name})
+    isValid = len(c.fetchall())  # returns 0 or 1 depending on if word exists.
+    status = str(isValid == 1)  # string True or False
     conn.commit()
-    return {"words": results}
-
-
-# @app.post("/validation/checkword")
-# async def check_word(request: Request):
-#     print(request.body())
-#     return {"message": "LOL"}
+    return {"isValidWord": status}
