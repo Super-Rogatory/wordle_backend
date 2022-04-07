@@ -8,7 +8,7 @@ def start_connection(n):
     # Ensures that we connect to the database.
     try:
         conn = sqlite3.connect(
-            f"../db/{options[n]}.db"
+            f"db/{options[n]}.db"
         )  # create connection to db on error default to except clause.
         print(f"Successfully connected to {options[n]} database.")
         return conn
