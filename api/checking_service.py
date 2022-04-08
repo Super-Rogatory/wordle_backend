@@ -14,3 +14,9 @@ wordOTD = c.fetchone()[1]
 @app.get("/")
 async def root():
     return {"word of the day": wordOTD}
+
+@app.post("/checking/checkanswer")
+async def check_answer(answer: str):
+    isCorrect= str(answer == wordOTD)  # returns True or False if answer is correct
+    conn.commit()
+    return {"isAnswerCorrect": isCorrect}
