@@ -18,5 +18,4 @@ async def root():
 @app.post("/checking/checkanswer")
 async def check_answer(answer: str):
     isCorrect= str(answer == wordOTD)  # returns True or False if answer is correct
-    conn.commit()
     return {"isAnswerCorrect": isCorrect}
