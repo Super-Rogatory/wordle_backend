@@ -52,6 +52,7 @@ To get a local copy up and running follow these simple example steps.
    ```    
 4. Run either the checkings or validation service (or both!)
    ```sh
+   cd ../
    foreman start checkings
    foreman start validations
    ```
