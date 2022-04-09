@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from utils import start_connection
+from validation_service import check_word
 
 app = FastAPI()
 
@@ -8,14 +9,31 @@ conn = start_connection(2)
 c = conn.cursor()
 
 # select word of the day
-c.execute("SELECT * FROM answers ORDER BY RANDOM() LIMIT 1")
-wordOTD = c.fetchone()[1]
+# c.execute("SELECT * FROM answers ORDER BY RANDOM() LIMIT 1")
+# wordOTD = c.fetchone()[1]
+wordOTD = "tread"
 
-@app.get("/")
-async def root():
-    return {"word of the day": wordOTD}
 
 @app.post("/checking/checkanswer")
 async def check_answer(answer: str):
-    isCorrect= str(answer == wordOTD)  # returns True or False if answer is correct
-    return {"isAnswerCorrect": isCorrect}
+    # use validation function to check if word is valid.
+    cw = await check_word(answer)
+    if not cw["isValidWord"]:
+        raise HTTPException(status_code=400, detail="Word is invalid.")
+    # Word is valid from this point on.
+    status = {1: "absent", 2: "present", 3: "correct"}
+    word_status = []  # list of objects. [{ "t", "present"}]
+    index = 0
+    isCorrect = False
+    if answer == wordOTD:
+        isCorrect = True
+    else:
+        for letter in answer:
+            if letter == wordOTD[index]:
+                word_status.append({letter: status[3]})
+            elif wordOTD.find(letter) != -1:
+                word_status.append({letter, status[2]})
+            else:
+                word_status.append({letter, status[1]})
+            index = index + 1
+    return {"answerResults": "Correct" if isCorrect else word_status}

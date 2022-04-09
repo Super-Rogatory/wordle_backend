@@ -8,16 +8,11 @@ conn = start_connection(1)  # bootstraps connection to db
 c = conn.cursor()
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
 @app.post("/validation/checkword")
 async def check_word(name: str):
     c.execute("SELECT DISTINCT * FROM words WHERE name=:name LIMIT 1", {"name": name})
     isValid = len(c.fetchall())  # returns 0 or 1 depending on if word exists.
-    status = str(isValid == 1)  # string True or False
+    status = isValid == 1  # True or False
     conn.commit()
     return {"isValidWord": status}
 
