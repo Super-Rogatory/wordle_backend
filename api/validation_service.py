@@ -7,6 +7,10 @@ app = FastAPI()
 conn = start_connection(1)  # bootstraps connection to db
 c = conn.cursor()
 
+# (id, value) in validation database
+ID = 0
+WORD = 1
+
 
 @app.post("/validation/checkword")
 async def check_word(name: str):
@@ -24,6 +28,7 @@ async def add_word(name: str):
         raise HTTPException(
             status_code=400, detail="Malformed request syntax - check length of word."
         )
+
     # checks to see if word is already in the database - if it is return 400 status code
     c.execute("SELECT DISTINCT * FROM words WHERE name=:name LIMIT 1", {"name": name})
     doesWordExist = len(c.fetchall()) > 0
@@ -31,10 +36,11 @@ async def add_word(name: str):
         raise HTTPException(
             status_code=400, detail="Word already exists in the database."
         )
+
     # if all goes well - continue here.
     # query to get highest id.
     c.execute("SELECT id FROM words ORDER BY id DESC LIMIT 1")
-    maxId = c.fetchone()[0]  # rip value from query
+    maxId = c.fetchone()[ID]  # rip value from query
     obj = {"id": maxId + 1, "name": name}
     c.execute(
         "INSERT INTO words VALUES(:id, :name)", {"id": obj["id"], "name": obj["name"]}
@@ -47,4 +53,3 @@ async def add_word(name: str):
 async def remove_word(name: str):
     c.execute("DELETE FROM words WHERE name=:name", {"name": name})
     conn.commit()
-    return {"ok": True}

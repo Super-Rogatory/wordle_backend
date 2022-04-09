@@ -1,23 +1,64 @@
-# Next Steps
+# Microservice Implementation with FastAPI | Foreman | SQLite3
 
-- connect checking_service and validation_service to their respective databases.
-- [x] Connect server to database to serve all words - testing to see if we can communicate between back-end services.
-- [x] Checking if a guess is a valid five-letter word
-- [ ] Adding and removing possible guesses
+<!-- ABOUT THE PROJECT -->
+## Contributors
+- **Chukwudi Ikem**
+- **James Talavera**
 
-## Some Notes on Python SQLite Tutorial
 
-- ### THE SETUP PROCESS
-```
-conn = sqlite3.connect('database.db')
-c = conn.cursor()
-```
+### Built With
 
-- ### It's a two step process for retrieving data from a query. We must first execute the query, then we can use c.fetchall() | .fetchmany | fetchone() to get the results.
-```
-c.execute("SELECT * FROM words;")
-print(c.fetchall())
-```
+* [FastAPI](https://fastapi.tiangolo.com/)
+* [Foreman](https://pypi.org/project/foreman/)
+* [SQLite](https://www.sqlite.org/index.html)
+* [Uvicorn](https://www.uvicorn.org/)
+* [Sqlite-Utils](https://pypi.org/project/sqlite-utils/)
 
-- ### Remember to commit your changes
-`conn.commit()`    
+<!-- GETTING STARTED -->
+## Getting Started
+
+This is an example of how you may give instructions on setting up your project locally.
+To get a local copy up and running follow these simple example steps.
+
+### Installation
+
+* Make sure to have python3 and pip installed on your computer.
+  ```sh
+    sudo apt update
+    sudo apt install --yes python3-pip ruby-foreman sqlite3 httpie
+  ```
+
+* Install FastAPI and other tools
+  ```sh
+    python3 -m pip install 'fastapi[all]' sqlite-utils uvicorn
+  ```
+
+
+
+### Final Steps
+
+_Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
+
+1. Clone the repo
+   ```sh
+   git clone https://github.com/Super-Rogatory/microservice_implementation
+   ```
+2. In the root directory of the app folder, create a .env and set values for CHECKING_PORT and VALIDATION_PORT.
+    ```
+    CHECKING_PORT=5000
+    VALIDATION_PORT=5500
+    ```
+3. Run either the checkings or validation service (or both!)
+   ```sh
+   foreman start checkings
+   foreman start validations
+   ```
+4. Travel to http://127.0.0.1:5000/docs or http://127.0.0.1:5500/docs (depends on the values inputted for CHECKING_PORT and VALIDATION_PORT)
+5. Once there you can test out the routes!
+
+
+
+
+
+
+

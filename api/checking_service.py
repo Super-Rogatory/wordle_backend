@@ -9,7 +9,7 @@ app = FastAPI()
 conn = start_connection(2)
 c = conn.cursor()
 
-# (cur_Word, id, value) in database
+# (cur_Word, id, value) in checkings database
 CUR_WORD_STATUS = 0
 ID = 1
 WORD = 2
