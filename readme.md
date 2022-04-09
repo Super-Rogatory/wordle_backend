@@ -47,7 +47,8 @@ To get a local copy up and running follow these simple example steps.
     ```
 3. Seed the database! (you may need to change permissions on your local machine)
    ```sh
-   ./db/db_seed.sh
+   cd /db
+   ./db_seed.sh
    ```    
 4. Run either the checkings or validation service (or both!)
    ```sh
