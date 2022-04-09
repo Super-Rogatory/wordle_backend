@@ -68,7 +68,7 @@ async def change_answer():
     c.execute("UPDATE answers SET cur_word=1 WHERE id=:id", {"id": randomId})
     c.execute("SELECT * FROM answers WHERE cur_word=1")
     answer_properties = c.fetchone()
-
+    conn.commit()
     # Changes word of the day
     wordOTD = answer_properties[WORD]
     return {"word": wordOTD}
