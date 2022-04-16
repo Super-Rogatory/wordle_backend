@@ -7,7 +7,7 @@ from utils import (
     analyze_guess_data,
 )
 from datetime import datetime
-
+import json
 
 app = FastAPI()
 
@@ -48,12 +48,28 @@ AS
         finished
 /* streaks(user_id,streak,beginning,ending) */;    
 """
-# (user_id, game_id, finished, guesses, won) in statistics database
-USER_ID = 0
-GAME_ID = 1
-FINISHED = 2
-GUESSES = 3
-WON_STATUS = 4
+
+
+@app.get("/statistics/top_ten_in_wins")
+async def get_top_ten_in_wins():
+    c.execute(
+        """
+            SELECT username FROM users JOIN wins USING(user_id) ORDER BY 'COUNT(won)' DESC LIMIT 10
+        """
+    )
+    res = c.fetchall()
+    return {"users": res}
+
+
+@app.get("/statistics/top_ten_in_streaks")
+async def get_top_ten_in_streaks():
+    c.execute(
+        """
+            SELECT username FROM users JOIN streaks USING(user_id) ORDER BY streak DESC LIMIT 10
+        """
+    )
+    res = c.fetchall()
+    return {"users": res}
 
 
 @app.get("/statistics/{user_id}")
