@@ -1,5 +1,11 @@
 from fastapi import FastAPI, HTTPException
-from utils import start_connection, validate_game_result, get_streak, get_guesses
+from utils import (
+    start_connection,
+    validate_game_result,
+    get_streak,
+    get_guesses,
+    analyze_guess_data,
+)
 from datetime import datetime
 
 
@@ -67,8 +73,18 @@ async def get_statistics(user_id: int):
     res = c.fetchall()
     (cur_streak, max_streak) = get_streak(res)
     guesses = get_guesses(res)
-    print(cur_streak, max_streak, guesses)
-    return 0
+    (win_percentage, games_played, games_won, avg_guesses) = analyze_guess_data(guesses)
+    return {
+        "stats": {
+            "currentStreak": cur_streak,
+            "maxStreak": max_streak,
+            "guesses": guesses,
+            "winPercentage": win_percentage,
+            "gamesPlayed": games_played,
+            "gamesWon": games_won,
+            "averageGuesses": avg_guesses,
+        }
+    }
 
 
 @app.post("/statistics/gameresult/{user_id}")

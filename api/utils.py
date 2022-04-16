@@ -1,3 +1,4 @@
+from audioop import avg
 import sqlite3
 import re
 
@@ -49,3 +50,19 @@ def get_guesses(streaks):
             guess_obj["fail"] += 1
         guess_obj[str(guess)] += 1
     return guess_obj
+
+
+def analyze_guess_data(guess_obj):
+    wins = 0
+    losses = 0
+    avg_guesses = 0
+    for (key, value) in guess_obj.items():
+        if key == "fail":
+            losses += value
+        else:
+            wins += value
+            avg_guesses += int(key) * value  # 1 * 4 + 2 * 2 ... x/6
+    total = wins + losses
+    win_percentage = round(wins / total, 1) * 100  # calculate win percentage
+    avg_guesses = round(avg_guesses / wins)
+    return (win_percentage, total, wins, avg_guesses)
