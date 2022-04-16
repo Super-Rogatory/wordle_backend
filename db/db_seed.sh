@@ -25,7 +25,7 @@ fi
 
 # at this point we should have a usable json file for the word list.
 rm word_list.txt
-
+rm word_list.json
 # inserts all of the rows from our word_list.json into the table. 
 sqlite-utils insert word_list.db words word_list.json --pk=id # sqlite3 word_list.db => SELECT * FROM words. to check out table.
 
@@ -41,6 +41,7 @@ fi
 
 # at this point we should have a usable json file for the answer list.
 rm answers.txt
+rm answers.json
 
 # same process as word_list
 sqlite-utils insert answers.db answers answers.json --pk=id # sqlite3 answers.db => SELECT * FROM answers. to check out table
