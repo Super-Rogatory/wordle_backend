@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from utils import start_connection, validate_game_result
+from utils import start_connection, validate_game_result, get_streak, get_guesses
 from datetime import datetime
 
 
@@ -24,6 +24,23 @@ c = conn.cursor()
         PRIMARY KEY(user_id, game_id),
         FOREIGN KEY(user_id) REFERENCES users(user_id)
     );
+CREATE VIEW streaks
+AS
+    SELECT
+        user_id,
+        COUNT(*) AS streak,
+        MIN(finished) AS beginning,
+        MAX(finished) AS ending
+    FROM
+        groups
+    GROUP BY
+        user_id, base_date
+    HAVING
+        streak > 1
+    ORDER BY
+        user_id,
+        finished
+/* streaks(user_id,streak,beginning,ending) */;    
 """
 # (user_id, game_id, finished, guesses, won) in statistics database
 USER_ID = 0
@@ -31,6 +48,27 @@ GAME_ID = 1
 FINISHED = 2
 GUESSES = 3
 WON_STATUS = 4
+
+
+@app.get("/statistics/{user_id}")
+async def get_statistics(user_id: int):
+    # execute query to streak|guesses|won
+    c.execute(
+        """
+            SELECT streak, guesses, won
+            FROM games g
+            LEFT JOIN streaks s
+            USING(user_id)
+            WHERE user_id=:uid 
+            ORDER BY beginning DESC
+        """,
+        {"uid": user_id},
+    )
+    res = c.fetchall()
+    (cur_streak, max_streak) = get_streak(res)
+    guesses = get_guesses(res)
+    print(cur_streak, max_streak, guesses)
+    return 0
 
 
 @app.post("/statistics/gameresult/{user_id}")
