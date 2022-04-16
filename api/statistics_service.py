@@ -6,48 +6,12 @@ from utils import (
     get_guesses,
     analyze_guess_data,
 )
-from datetime import datetime
-import json
 
 app = FastAPI()
 
 # connect to statistics database
 conn = start_connection(3)
 c = conn.cursor()
-"""
-    SCHEMA
-    CREATE TABLE users(
-        user_id INTEGER PRIMARY KEY,
-        username VARCHAR UNIQUE
-    );
-
-    CREATE TABLE games(
-        user_id INTEGER NOT NULL,
-        game_id INTEGER NOT NULL,
-        finished DATE DEFAULT CURRENT_TIMESTAMP,
-        guesses INTEGER,
-        won BOOLEAN,
-        PRIMARY KEY(user_id, game_id),
-        FOREIGN KEY(user_id) REFERENCES users(user_id)
-    );
-CREATE VIEW streaks
-AS
-    SELECT
-        user_id,
-        COUNT(*) AS streak,
-        MIN(finished) AS beginning,
-        MAX(finished) AS ending
-    FROM
-        groups
-    GROUP BY
-        user_id, base_date
-    HAVING
-        streak > 1
-    ORDER BY
-        user_id,
-        finished
-/* streaks(user_id,streak,beginning,ending) */;    
-"""
 
 
 @app.get("/statistics/top_ten_in_wins")
