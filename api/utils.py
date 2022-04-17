@@ -48,7 +48,8 @@ def get_guesses(streaks):
     for (_, guess, won) in streaks:
         if won == 0:
             guess_obj["fail"] += 1
-        guess_obj[str(guess)] += 1
+        else:
+            guess_obj[str(guess)] += 1
     return guess_obj
 
 
