@@ -1,11 +1,15 @@
-from audioop import avg
+from multipledispatch import dispatch
 import sqlite3
 import re
 
+
+@dispatch(int)
 # START_CONNECTION - takes in a number n that determines which database to connect to
 # returns conn object.
-def start_connection(n):
-    # n = 1 word_list | n = 2 answers
+def start_connection(n=0):
+    if not n:
+        return
+    # n = 1 word_list | n = 2 answers | n = 3 statistics
     options = {1: "word_list", 2: "answers", 3: "statistics"}
     # Ensures that we connect to the database.
     try:
@@ -13,6 +17,24 @@ def start_connection(n):
             f"db/{options[n]}.db"
         )  # create connection to db on error default to except clause.
         print(f"Successfully connected to {options[n]} database.")
+        return conn
+
+    except sqlite3.Error as error:
+        print("Error occurred while connecting to word list database.", error)
+
+
+@dispatch(str)
+# START_CONNECTION - takes in a number n that determines which database to connect to
+# returns conn object.
+def start_connection(name=""):
+    if not name:
+        return
+    # Ensures that we connect to the database.
+    try:
+        conn = sqlite3.connect(
+            f"db/{name}.db"
+        )  # create connection to db on error default to except clause.
+        print(f"Successfully connected to {name} database.")
         return conn
 
     except sqlite3.Error as error:
@@ -53,6 +75,7 @@ def get_guesses(streaks):
     return guess_obj
 
 
+# ANALYZE GUESS DATA - takes in the guess_object and parses it for relevant data.
 def analyze_guess_data(guess_obj):
     wins = 0
     losses = 0

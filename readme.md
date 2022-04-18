@@ -13,6 +13,7 @@
 * [SQLite](https://www.sqlite.org/index.html)
 * [Uvicorn](https://www.uvicorn.org/)
 * [Sqlite-Utils](https://pypi.org/project/sqlite-utils/)
+* [MultipleDispatch](https://pypi.org/project/multipledispatch/)
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -29,7 +30,7 @@ To get a local copy up and running follow these simple example steps.
 
 * Install FastAPI and other tools
   ```sh
-    python3 -m pip install 'fastapi[all]' sqlite-utils uvicorn
+    python3 -m pip install 'fastapi[all]' sqlite-utils uvicorn multipledispatch
   ```
 
 
