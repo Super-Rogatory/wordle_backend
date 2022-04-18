@@ -7,8 +7,6 @@ import re
 # START_CONNECTION - takes in a number n that determines which database to connect to
 # returns conn object.
 def start_connection(n):
-    if not n:
-        return
     # n = 1 word_list | n = 2 answers | n = 3 statistics
     options = {1: "word_list", 2: "answers", 3: "statistics"}
     # Ensures that we connect to the database.

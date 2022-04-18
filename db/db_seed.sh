@@ -6,7 +6,7 @@
 grep -E -o "\<[a-z]{5}\>" /usr/share/dict/words | sort -u | iconv -f utf8 -t ascii//TRANSLIT//IGNORE  >> word_list.txt
 if test `find "word_list.txt"`
 then
-    echo "File Created!"
+    echo "Word_List File Created!"
 fi
 
 # make sure to install sqlite-utils -> pip install sqlite-utils
@@ -25,10 +25,9 @@ fi
 
 # at this point we should have a usable json file for the word list.
 rm word_list.txt
-rm word_list.json
 # inserts all of the rows from our word_list.json into the table. 
 sqlite-utils insert word_list.db words word_list.json --pk=id # sqlite3 word_list.db => SELECT * FROM words. to check out table.
-
+rm word_list.json
 # ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # FOR ANSWER LIST
@@ -41,13 +40,18 @@ fi
 
 # at this point we should have a usable json file for the answer list.
 rm answers.txt
-rm answers.json
+
 
 # same process as word_list
 sqlite-utils insert answers.db answers answers.json --pk=id # sqlite3 answers.db => SELECT * FROM answers. to check out table
+rm answers.json
 
 # creates shard databases
 sqlite-utils create-database stats_1.db
 sqlite-utils create-database stats_2.db
 sqlite-utils create-database stats_3.db
-python3 shard.py
+sqlite-utils create-database users.db
+
+# get path for shard.py - so start_connection will work in shard.py
+cd ../
+python3 db/shard.py
