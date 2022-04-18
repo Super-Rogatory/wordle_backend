@@ -6,7 +6,7 @@ import re
 @dispatch(int)
 # START_CONNECTION - takes in a number n that determines which database to connect to
 # returns conn object.
-def start_connection(n=0):
+def start_connection(n):
     if not n:
         return
     # n = 1 word_list | n = 2 answers | n = 3 statistics
@@ -24,15 +24,14 @@ def start_connection(n=0):
 
 
 @dispatch(str)
-# START_CONNECTION - takes in a number n that determines which database to connect to
-# returns conn object.
+# START_CONNECTION - takes the name of a database to connect to
 def start_connection(name=""):
     if not name:
         return
     # Ensures that we connect to the database.
     try:
         conn = sqlite3.connect(
-            f"db/{name}.db"
+            f"db/{name}.db", detect_types=sqlite3.PARSE_DECLTYPES
         )  # create connection to db on error default to except clause.
         print(f"Successfully connected to {name} database.")
         return conn

@@ -45,3 +45,9 @@ rm answers.json
 
 # same process as word_list
 sqlite-utils insert answers.db answers answers.json --pk=id # sqlite3 answers.db => SELECT * FROM answers. to check out table
+
+# creates shard databases
+sqlite-utils create-database stats_1.db
+sqlite-utils create-database stats_2.db
+sqlite-utils create-database stats_3.db
+python3 shard.py
