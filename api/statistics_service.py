@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import FastAPI, HTTPException
 from utils import (
     start_connection,
@@ -6,6 +7,15 @@ from utils import (
     get_guesses,
     analyze_guess_data,
 )
+from pydantic import BaseModel
+
+
+class Game(BaseModel):
+    game_id: int
+    finished: str
+    guesses: int
+    game_status: bool
+
 
 app = FastAPI()
 
@@ -41,16 +51,15 @@ async def get_statistics(user_id: int):
     # execute query to streak|guesses|won
     c.execute(
         """
-            SELECT streak, guesses, won
+            SELECT finished, guesses, won
             FROM games g
-            LEFT JOIN streaks s
-            USING(user_id)
             WHERE user_id=:uid 
-            ORDER BY beginning DESC
+            ORDER BY finished
         """,
         {"uid": user_id},
     )
     res = c.fetchall()
+    # use helper functions to parse data instead of making extra calls to db
     (cur_streak, max_streak) = get_streak(res)
     guesses = get_guesses(res)
     (win_percentage, games_played, games_won, avg_guesses) = analyze_guess_data(guesses)
@@ -67,34 +76,54 @@ async def get_statistics(user_id: int):
     }
 
 
-@app.post("/statistics/gameresult/{user_id}")
-async def modify_game_result(
-    user_id: int, game_id: int, status: int, finished: str, guesses: int
-):
+"""
+CREATE TABLE games(
+    user_id INTEGER NOT NULL,
+    game_id INTEGER NOT NULL,
+    finished DATE DEFAULT CURRENT_TIMESTAMP,
+    guesses INTEGER,
+    won BOOLEAN,
+    PRIMARY KEY(user_id, game_id),
+    FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+"""
+
+
+@app.post("/statistics/game_result/{user_id}")
+async def game_result(user_id: int, game: Game):
     # validate query
-    isValid = validate_game_result(status, finished, guesses)
+    isValid = validate_game_result(game.game_status, game.finished, game.guesses)
     if not isValid:
         raise HTTPException(status_code=400, detail="Query is invalid.")
+
+    # avoiding duplicate dates - doesn't make sense for wordle game.
+    c.execute(
+        "SELECT * FROM games WHERE finished=:date_finished AND user_id=:uid",
+        {"date_finished": game.finished, "uid": user_id},
+    )
+    res = c.fetchall()
+    if len(res):
+        raise HTTPException(status_code=400, detail="Duplicate dates error.")
 
     # uid and gid uniquely identify game, update properties
     c.execute(
         """
-            UPDATE games 
-            SET won=:status, finished=:finished, guesses=:guesses WHERE user_id=:uid AND game_id=:gid
+            INSERT INTO games
+            VALUES (:uid, :gid, :finished, :guesses, :won) 
         """,
         {
-            "status": status,
-            "finished": finished,
-            "guesses": guesses,
             "uid": user_id,
-            "gid": game_id,
+            "gid": game.game_id,
+            "finished": game.finished,
+            "guesses": game.guesses,
+            "won": game.game_status,
         },
     )
     conn.commit()
     # retreive information after update to ensure it has updated.
     c.execute(
         "SELECT * FROM games WHERE game_id=:gid AND user_id=:uid",
-        {"gid": game_id, "uid": user_id},
+        {"gid": game.game_id, "uid": user_id},
     )
     res = c.fetchone()
 
