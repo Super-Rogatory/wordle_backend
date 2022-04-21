@@ -19,7 +19,7 @@ def start_connection(n):
         return conn
 
     except sqlite3.Error as error:
-        print("Error occurred while connecting to word list database.", error)
+        print(f"Error occurred while connecting to {options[n]} database.", error)
 
 
 @dispatch(str)
@@ -36,7 +36,7 @@ def start_connection(name=""):
         return conn
 
     except sqlite3.Error as error:
-        print("Error occurred while connecting to word list database.", error)
+        print(f"Error occurred while connecting to {name} database.", error)
 
 
 # VALIDATE_GAME_RESULT - takes in specified parameters that are validated to ensure data consistency

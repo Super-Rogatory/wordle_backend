@@ -24,18 +24,19 @@ c_users = users.cursor()
 
 # FOR SHARDS: Allows the storage of guid as the unique identifier for records
 sqlite3.register_converter("GUID", lambda b: uuid.UUID(bytes_le=b))
-sqlite3.register_adapter(uuid.UUID, lambda u: u.bytes_le)
+sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
 
 c.execute("SELECT * FROM games")
 c_s1.execute("DROP TABLE IF EXISTS games_1")
 c_s1.execute(
     """
     CREATE TABLE IF NOT EXISTS games_1 (
-        guid GUID PRIMARY KEY,
+        guid GUID,
         game_id INTEGER NOT NULL,
         finished DATE DEFAULT CURRENT_TIMESTAMP,
         guesses INTEGER,
-        won BOOLEAN
+        won BOOLEAN,
+        PRIMARY KEY(guid, game_id)
     )
     """
 )
@@ -43,11 +44,12 @@ c_s2.execute("DROP TABLE IF EXISTS games_2")
 c_s2.execute(
     """
     CREATE TABLE IF NOT EXISTS games_2 (
-        guid GUID PRIMARY KEY,
+        guid GUID,
         game_id INTEGER NOT NULL,
         finished DATE DEFAULT CURRENT_TIMESTAMP,
         guesses INTEGER,
-        won BOOLEAN
+        won BOOLEAN,
+        PRIMARY KEY(guid, game_id)
     )
 """
 )
@@ -55,11 +57,12 @@ c_s3.execute("DROP TABLE IF EXISTS games_3")
 c_s3.execute(
     """
     CREATE TABLE IF NOT EXISTS games_3 (
-        guid GUID PRIMARY KEY,
+        guid GUID,
         game_id INTEGER NOT NULL,
         finished DATE DEFAULT CURRENT_TIMESTAMP,
         guesses INTEGER,
-        won BOOLEAN
+        won BOOLEAN,
+        PRIMARY KEY(guid, game_id)
     )
 """
 )
@@ -109,7 +112,7 @@ for record in records_in_users:
             c_s1.execute(
                 "INSERT INTO games_1 VALUES (:guid, :gid, :finished, :guesses, :won)",
                 {
-                    "guid": uuid.uuid4(),
+                    "guid": guid,
                     "gid": game_id,
                     "finished": finished,
                     "guesses": guesses,
@@ -120,7 +123,7 @@ for record in records_in_users:
             c_s2.execute(
                 "INSERT INTO games_2 VALUES (:guid, :gid, :finished, :guesses, :won)",
                 {
-                    "guid": uuid.uuid4(),
+                    "guid": guid,
                     "gid": game_id,
                     "finished": finished,
                     "guesses": guesses,
@@ -131,7 +134,7 @@ for record in records_in_users:
             c_s3.execute(
                 "INSERT INTO games_3 VALUES (:guid, :gid, :finished, :guesses, :won)",
                 {
-                    "guid": uuid.uuid4(),
+                    "guid": guid,
                     "gid": game_id,
                     "finished": finished,
                     "guesses": guesses,
@@ -157,6 +160,12 @@ if all_records_in_shards == len(total_records):
 else:
     print("Failed to shard DB!")
 
+# testing query
+# c_users.execute("SELECT * FROM users LIMIT 1")
+# id = c_users.fetchone()[0]  # uuid.UUID(str(id)) == id
+# print(id)
+# c_s1.execute("SELECT guid FROM games_1 WHERE guid=:id", {"id": id})
+# print(c_s1.fetchall())
 
 # save changes
 shard_1.commit()
