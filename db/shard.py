@@ -32,7 +32,6 @@ c_s1.execute(
     """
     CREATE TABLE IF NOT EXISTS games_1 (
         guid GUID PRIMARY KEY,
-        user_id INTEGER NOT NULL,
         game_id INTEGER NOT NULL,
         finished DATE DEFAULT CURRENT_TIMESTAMP,
         guesses INTEGER,
@@ -45,7 +44,6 @@ c_s2.execute(
     """
     CREATE TABLE IF NOT EXISTS games_2 (
         guid GUID PRIMARY KEY,
-        user_id INTEGER NOT NULL,
         game_id INTEGER NOT NULL,
         finished DATE DEFAULT CURRENT_TIMESTAMP,
         guesses INTEGER,
@@ -58,7 +56,6 @@ c_s3.execute(
     """
     CREATE TABLE IF NOT EXISTS games_3 (
         guid GUID PRIMARY KEY,
-        user_id INTEGER NOT NULL,
         game_id INTEGER NOT NULL,
         finished DATE DEFAULT CURRENT_TIMESTAMP,
         guesses INTEGER,
@@ -70,7 +67,8 @@ c_users.execute("DROP TABLE IF EXISTS users")
 c_users.execute(
     """
     CREATE TABLE IF NOT EXISTS users (
-        user_ID INTEGER NOT NULL,
+        guid GUID PRIMARY KEY,
+        user_id INTEGER NOT NULL,
         username VARCHAR UNIQUE
     )
     """
@@ -81,78 +79,84 @@ shard_2.commit()
 shard_3.commit()
 users.commit()
 
-# FOR SHARDS: now we are ready to shard!
-all_records = c.fetchall()
-for record in all_records:
-    cases = {"shard_1": 0, "shard_2": 1, "shard_3": 2}
-    (user_id, game_id, finished, guesses, won) = record
-    if user_id % 3 == cases["shard_1"]:
-        c_s1.execute(
-            "INSERT INTO games_1 VALUES (:guid, :uid, :gid, :finished, :guesses, :won)",
-            {
-                "guid": uuid.uuid4(),
-                "uid": user_id,
-                "gid": game_id,
-                "finished": finished,
-                "guesses": guesses,
-                "won": won,
-            },
-        )
-    elif user_id % 3 == cases["shard_2"]:
-        c_s2.execute(
-            "INSERT INTO games_2 VALUES (:guid, :uid, :gid, :finished, :guesses, :won)",
-            {
-                "guid": uuid.uuid4(),
-                "uid": user_id,
-                "gid": game_id,
-                "finished": finished,
-                "guesses": guesses,
-                "won": won,
-            },
-        )
-    elif user_id % 3 == cases["shard_3"]:
-        c_s3.execute(
-            "INSERT INTO games_3 VALUES (:guid, :uid, :gid, :finished, :guesses, :won)",
-            {
-                "guid": uuid.uuid4(),
-                "uid": user_id,
-                "gid": game_id,
-                "finished": finished,
-                "guesses": guesses,
-                "won": won,
-            },
-        )
+# FOR USERS: copying from users in statistics.db to users in users.db
+c.execute("SELECT * FROM users")
+all_users_in_main_db = c.fetchall()
+for user in all_users_in_main_db:
+    (user_id, username) = user
+    c_users.execute(
+        "INSERT INTO users VALUES(:guid, :uid, :name)",
+        {"guid": uuid.uuid4(), "uid": user_id, "name": username},
+    )
 
+c_users.execute("SELECT * FROM users")
+records_in_users = c_users.fetchall()
+if len(records_in_users) == len(all_users_in_main_db):
+    print("Users have been copied over successfully.")
+else:
+    print("Failed to copy from statistics db to users db!")
+
+# FOR SHARDS: now we are ready to shard!
+# take a user record, then use main stats db to find all games tied to users - mirror that info into the sharded games db
+cases = {"shard_1": 0, "shard_2": 1, "shard_3": 2}
+for record in records_in_users:
+    (guid, user_id, username) = record
+    c.execute("SELECT * FROM games WHERE user_id=:uid", {"uid": user_id})
+    games = c.fetchall()
+    for game in games:
+        (_, game_id, finished, guesses, won) = game
+        if int(guid) % 3 == cases["shard_1"]:
+            c_s1.execute(
+                "INSERT INTO games_1 VALUES (:guid, :gid, :finished, :guesses, :won)",
+                {
+                    "guid": uuid.uuid4(),
+                    "gid": game_id,
+                    "finished": finished,
+                    "guesses": guesses,
+                    "won": won,
+                },
+            )
+        elif int(guid) % 3 == cases["shard_2"]:
+            c_s2.execute(
+                "INSERT INTO games_2 VALUES (:guid, :gid, :finished, :guesses, :won)",
+                {
+                    "guid": uuid.uuid4(),
+                    "gid": game_id,
+                    "finished": finished,
+                    "guesses": guesses,
+                    "won": won,
+                },
+            )
+        elif int(guid) % 3 == cases["shard_3"]:
+            c_s3.execute(
+                "INSERT INTO games_3 VALUES (:guid, :gid, :finished, :guesses, :won)",
+                {
+                    "guid": uuid.uuid4(),
+                    "gid": game_id,
+                    "finished": finished,
+                    "guesses": guesses,
+                    "won": won,
+                },
+            )
 
 # FOR SHARDS: testing that the database has been sharded correctly with guid information
-c_s1.execute("SELECT DISTINCT COUNT(guid) FROM games_1")
-c_s2.execute("SELECT DISTINCT COUNT(guid) FROM games_2")
-c_s3.execute("SELECT DISTINCT COUNT(guid) FROM games_3")
-records_in_shard_1 = c_s1.fetchone()[0]
-records_in_shard_2 = c_s2.fetchone()[0]
-records_in_shard_3 = c_s3.fetchone()[0]
-
+c_s1.execute("SELECT guid FROM games_1")
+c_s2.execute("SELECT guid FROM games_2")
+c_s3.execute("SELECT guid FROM games_3")
+c.execute("SELECT * FROM games")
+records_in_shard_1 = c_s1.fetchall()
+records_in_shard_2 = c_s2.fetchall()
+records_in_shard_3 = c_s3.fetchall()
+all_records_in_shards = (
+    len(records_in_shard_1) + len(records_in_shard_2) + len(records_in_shard_3)
+)
+total_records = c.fetchall()
 # FOR SHARDS: testing to see if the database has been successfully sharded
-if records_in_shard_1 + records_in_shard_2 + records_in_shard_3 == len(all_records):
+if all_records_in_shards == len(total_records):
     print("Database has been successfully sharded.")
 else:
     print("Failed to shard DB!")
 
-# FOR USERS: copying from users in statistics.db to users in users.db
-c.execute("SELECT * FROM users")
-all_users = c.fetchall()
-for user in all_users:
-    (user_id, username) = user
-    c_users.execute(
-        "INSERT INTO users VALUES(:uid, :name)", {"uid": user_id, "name": username}
-    )
-
-c_users.execute("SELECT DISTINCT COUNT(*) FROM users")
-records_in_users = c_users.fetchone()[0]
-if records_in_users == len(all_users):
-    print("Users have been copied over successfully.")
-else:
-    print("Failed to copy from statistics db to users db!")
 
 # save changes
 shard_1.commit()

@@ -57,7 +57,6 @@ def validate_game_result(status, finished, guesses):
 
 # GET_STREAK - takes in array of streak tuples and returns cur_streak, max_streak
 def get_streak(query):
-    print(query)
     FINISHED_DATE = 0
     GAME_STATUS = 2
     cur_streak = 0
@@ -79,35 +78,9 @@ def get_streak(query):
         # set max streak to cur streak if cur streak is new max.
         if cur_streak > max_streak:
             max_streak = cur_streak
-
-    # for (streak, _, _) in streaks:
-    #     cur_streak = 0 if streak == None or streak == 0 else streak
-    #     if cur_streak > max_streak:
-    #         max_streak = streak
     return (cur_streak, max_streak)
 
 
-get_streak(
-    [
-        ("2022-01-09", 6, 1),
-        ("2022-01-29", 5, 0),
-        ("2022-02-04", 5, 0),
-        ("2022-02-08", 2, 1),
-        ("2022-02-16", 6, 1),
-        ("2022-02-24", 4, 1),
-        ("2022-03-03", 2, 1),
-        ("2022-03-05", 6, 1),
-        ("2022-03-14", 3, 1),
-        ("2022-04-01", 2, 1),
-        ("2022-04-02", 1, 1),
-        ("2022-04-03", 1, 1),
-        ("2022-04-04", 1, 1),
-        ("2022-04-05", 1, 1),
-        ("2022-04-06", 3, 0),
-        ("2022-04-07", 3, 1),
-        ("2022-04-08", 3, 1),
-    ]
-)
 # GET_GUESSES - takes in array of streak tuples and returns a guess_object.
 def get_guesses(streaks):
     guess_obj = {"1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "fail": 0}

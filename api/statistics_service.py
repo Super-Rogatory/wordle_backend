@@ -48,7 +48,7 @@ async def get_top_ten_in_streaks():
 
 @app.get("/statistics/{user_id}")
 async def get_statistics(user_id: int):
-    # execute query to streak|guesses|won
+    # execute query to finished|guesses|won
     c.execute(
         """
             SELECT finished, guesses, won
