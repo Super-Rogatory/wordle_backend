@@ -140,9 +140,9 @@ for record in records_in_users:
             )
 
 # FOR SHARDS: testing that the database has been sharded correctly with guid information
-c_s1.execute("SELECT guid FROM games_1")
-c_s2.execute("SELECT guid FROM games_2")
-c_s3.execute("SELECT guid FROM games_3")
+c_s1.execute("SELECT * FROM games_1")
+c_s2.execute("SELECT * FROM games_2")
+c_s3.execute("SELECT * FROM games_3")
 c.execute("SELECT * FROM games")
 records_in_shard_1 = c_s1.fetchall()
 records_in_shard_2 = c_s2.fetchall()
