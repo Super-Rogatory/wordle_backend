@@ -10,17 +10,18 @@ import collections
 # use UUID in table
 sqlite3.register_converter("GUID", lambda b: uuid.UUID(bytes_le=b))
 sqlite3.register_adapter(uuid.UUID, lambda u: u.bytes_le)
+# str(uuid.uuid4()),
 
-# use faker to create fake user and game data
+# create fake user data
 Faker = Factory.create
 fake = Faker()
 fake.seed(0)
 
-num_users = 10000
+num_users = 1000
 
 fake_users = [
     {
-        "user_id": str(uuid.uuid4()),
+        "user_id": fake.uuid4(),
         "username": fake.user_name(),
     }
     for x in range(num_users)
@@ -30,12 +31,7 @@ fake_users = [
 db = sqlite_utils.Database("./var/users.db")
 db["users"].insert_all(fake_users)
 
-
-# faker date_between() etc functions not working
-start_date = datetime.date(2022, 1, 1)
-end_date = datetime.date.today()
-day_range = (end_date - start_date).days
-
+# create shards for games stats databases
 shards = 3
 shard_games = collections.defaultdict(list)
 
@@ -45,21 +41,27 @@ def getShardId(string_uuid):
     return curr_uuid.int % shards
 
 
+# generate games until today
+end_date = datetime.date.today()
+
+
 for i in range(num_users):
     user_id = fake_users[i].get("user_id")
     # generate games for this user
-    games_played = fake.random_int(min=50, max=100)
+    games_played = fake.random_int(min=50, max=500)
+    # fake first game date for each user
     game_id = 0
-    user_game = []
+    user_date = end_date - datetime.timedelta(days=games_played)
+    # games played by this user (plays every day) until today
     for i in range(games_played):
+        # increment date and game for this user
         game_id += 1
+        user_date += datetime.timedelta(days=1)
+        # game data
         game = {
             "user_id": user_id,
             "game_id": game_id,
-            "finished": (
-                start_date
-                + datetime.timedelta(days=fake.random_int(min=0, max=day_range))
-            ),
+            "finished": user_date,
             "guesses": fake.random_int(min=1, max=6),
             "won": fake.boolean(chance_of_getting_true=75),
         }
