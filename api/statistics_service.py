@@ -1,4 +1,6 @@
 import sqlite3
+import uuid
+from contextlib import closing, contextmanager
 from fastapi import FastAPI, HTTPException, Depends
 from utils import (
     start_connection,
@@ -10,6 +12,7 @@ from utils import (
 from pydantic import BaseModel, BaseSettings
 
 
+# defines a valid game in request body
 class Game(BaseModel):
     game_id: int
     finished: str
@@ -17,48 +20,78 @@ class Game(BaseModel):
     game_status: bool
 
 
+# Allows us to retrieve NAME_OF_DB from Procfile
 class Settings(BaseSettings):
     name_of_db: str
 
 
 app = FastAPI()
 settings = Settings()
+users_db = start_connection("users")
 
 
+@contextmanager
 def get_db():
-    try:
-        db = start_connection(settings.name_of_db)
-        return db
-    except:
-        print("Error connecting to the db!")
+    with closing(start_connection(settings.name_of_db)) as db:
+        yield db
 
 
-@app.get("/")
-async def get_all():
-    try:
-        db = get_db()
-        c = db.cursor()
-        c.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        table_name = c.fetchone()[0]
-        c.execute(f"SELECT game_id FROM {table_name} LIMIT 10")
-        print(c.fetchall())
-    except Exception as e:
-        print(f"ERROR in get_all function! => {e}")
-    finally:
-        db.close()
+# @app.get("/")
+# async def get_all():
+#     with get_db() as db:
+#         try:
+#             c = db.cursor()
+#             c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+#             table_name = c.fetchone()[0]
+#             c.execute(f"SELECT game_id FROM {table_name} LIMIT 10")
+#             print(c.fetchall())
+#         except Exception as e:
+#             print(f"An error has occured! => {e}")
 
+# CREATE TABLE games(
+#     user_id INTEGER NOT NULL,
+#     game_id INTEGER NOT NULL,
+#     finished DATE DEFAULT CURRENT_TIMESTAMP,
+#     guesses INTEGER,
+#     won BOOLEAN,
+#     PRIMARY KEY(user_id, game_id),
+#     FOREIGN KEY(user_id) REFERENCES users(user_id)
+# );
+
+# So we can see the uuid in the terminal!
+sqlite3.register_converter("GUID", lambda b: uuid.UUID(bytes_le=b))
+sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
 
 # every route connects to a db, depending on env
 @app.get("/statistics/top_ten_in_wins")
-async def get_top_ten_in_wins(db: sqlite3.Connection = Depends(get_db)):
-    c = db.cursor()
-    c.execute(
-        """
-            SELECT username FROM users JOIN wins USING(user_id) ORDER BY 'COUNT(won)' DESC LIMIT 10
-        """
-    )
-    res = c.fetchall()
-    return {"users": res}
+async def get_top_ten_in_wins():
+    with get_db() as db:
+        try:
+            users_c = users_db.cursor()
+            c = db.cursor()
+            # retrieve the name of the table
+            c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            table_name = c.fetchone()[0]
+            # get the top 10 player's uuid and number of wins
+            c.execute(
+                f"""
+                    SELECT guid, COUNT(won) AS wins FROM {table_name} WHERE won=1 GROUP BY guid ORDER BY wins DESC LIMIT 10
+                """
+            )
+            games = c.fetchall()
+            names = []
+            # loop through each game record (uuid, win_count) and select the username that matches the uuid
+            for (id, _) in games:
+                users_c.execute(
+                    f"SELECT username FROM users WHERE guid=:id", {"id": id}
+                )
+                name = users_c.fetchone()[0]
+                names.append(name)
+            print(names)
+        except Exception as e:
+            print(f"An error has occured! => {e}")
+
+        return {"users": names}
 
 
 @app.get("/statistics/top_ten_in_streaks")
