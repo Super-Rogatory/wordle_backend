@@ -16,7 +16,7 @@ Faker = Factory.create
 fake = Faker()
 fake.seed(0)
 
-num_users = 1000
+num_users = 10000
 
 fake_users = [
     {
@@ -48,7 +48,7 @@ def getShardId(string_uuid):
 for i in range(num_users):
     user_id = fake_users[i].get("user_id")
     # generate games for this user
-    games_played = fake.random_int(min=50, max=500)
+    games_played = fake.random_int(min=50, max=100)
     game_id = 0
     user_game = []
     for i in range(games_played):
@@ -63,9 +63,9 @@ for i in range(num_users):
             "guesses": fake.random_int(min=1, max=6),
             "won": fake.boolean(chance_of_getting_true=75),
         }
-    # enter user's game into the correct shard
-    shard_id = getShardId(user_id)
-    shard_games[shard_id].append(game)
+        # enter user's game into the correct shard
+        shard_id = getShardId(user_id)
+        shard_games[shard_id].append(game)
 
 
 # add fake games to games table
