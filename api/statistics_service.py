@@ -1,5 +1,5 @@
-from datetime import date
-from fastapi import FastAPI, HTTPException
+import sqlite3
+from fastapi import FastAPI, HTTPException, Depends
 from utils import (
     start_connection,
     validate_game_result,
@@ -7,7 +7,7 @@ from utils import (
     get_guesses,
     analyze_guess_data,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, BaseSettings
 
 
 class Game(BaseModel):
@@ -17,15 +17,41 @@ class Game(BaseModel):
     game_status: bool
 
 
+class Settings(BaseSettings):
+    name_of_db: str
+
+
 app = FastAPI()
-
-# connect to statistics database
-conn = start_connection(3)
-c = conn.cursor()
+settings = Settings()
 
 
+def get_db():
+    try:
+        db = start_connection(settings.name_of_db)
+        return db
+    except:
+        print("Error connecting to the db!")
+
+
+@app.get("/")
+async def get_all():
+    try:
+        db = get_db()
+        c = db.cursor()
+        c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        table_name = c.fetchone()[0]
+        c.execute(f"SELECT game_id FROM {table_name} LIMIT 10")
+        print(c.fetchall())
+    except Exception as e:
+        print(f"ERROR in get_all function! => {e}")
+    finally:
+        db.close()
+
+
+# every route connects to a db, depending on env
 @app.get("/statistics/top_ten_in_wins")
-async def get_top_ten_in_wins():
+async def get_top_ten_in_wins(db: sqlite3.Connection = Depends(get_db)):
+    c = db.cursor()
     c.execute(
         """
             SELECT username FROM users JOIN wins USING(user_id) ORDER BY 'COUNT(won)' DESC LIMIT 10
@@ -36,7 +62,8 @@ async def get_top_ten_in_wins():
 
 
 @app.get("/statistics/top_ten_in_streaks")
-async def get_top_ten_in_streaks():
+async def get_top_ten_in_streaks(db: sqlite3.Connection = Depends(get_db)):
+    c = db.cursor()
     c.execute(
         """
             SELECT username FROM users JOIN streaks USING(user_id) ORDER BY streak DESC LIMIT 10
@@ -47,8 +74,9 @@ async def get_top_ten_in_streaks():
 
 
 @app.get("/statistics/{user_id}")
-async def get_statistics(user_id: int):
+async def get_statistics(user_id: int, db: sqlite3.Connection = Depends(get_db)):
     # execute query to finished|guesses|won
+    c = db.cursor()
     c.execute(
         """
             SELECT finished, guesses, won
@@ -90,7 +118,10 @@ CREATE TABLE games(
 
 
 @app.post("/statistics/game_result/{user_id}")
-async def game_result(user_id: int, game: Game):
+async def game_result(
+    user_id: int, game: Game, db: sqlite3.Connection = Depends(get_db)
+):
+    c = db.cursor()
     # validate query
     isValid = validate_game_result(game.game_status, game.finished, game.guesses)
     if not isValid:
@@ -119,7 +150,7 @@ async def game_result(user_id: int, game: Game):
             "won": game.game_status,
         },
     )
-    conn.commit()
+    db.commit()
     # retreive information after update to ensure it has updated.
     c.execute(
         "SELECT * FROM games WHERE game_id=:gid AND user_id=:uid",
