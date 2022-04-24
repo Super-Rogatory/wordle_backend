@@ -1,3 +1,4 @@
+import enum
 from multipledispatch import dispatch
 import sqlite3
 import re
@@ -107,3 +108,9 @@ def analyze_guess_data(guess_obj):
     win_percentage = round(wins / total, 1) * 100  # calculate win percentage
     avg_guesses = round(avg_guesses / wins)
     return (win_percentage, total, wins, avg_guesses)
+
+
+# FILTER TOP WINS - returns guid and number of wins for top acheivers!
+def filter_top_wins(list_of_wins):
+    # create filter algo
+    return 0

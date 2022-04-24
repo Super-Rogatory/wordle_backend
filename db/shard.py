@@ -27,6 +27,7 @@ c_users = users.cursor()
 # FOR SHARDS: Allows the storage of guid as the unique identifier for records
 sqlite3.register_converter("GUID", lambda b: uuid.UUID(bytes_le=b))
 sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
+
 # Creates game table for each database and useful virtual tables (views) to query from
 for (shard_cursor, tbl_name) in shard_cursors:
     shard_cursor.execute(f"DROP TABLE IF EXISTS {tbl_name}")
@@ -189,18 +190,12 @@ all_records_in_shards = (
     len(records_in_shard_1) + len(records_in_shard_2) + len(records_in_shard_3)
 )
 total_records = c.fetchall()
+
 # FOR SHARDS: testing to see if the database has been successfully sharded
 if all_records_in_shards == len(total_records):
     print("Database has been successfully sharded.")
 else:
     print("Failed to shard DB!")
-
-# testing query
-# c_users.execute("SELECT * FROM users LIMIT 1")
-# id = c_users.fetchone()[0]  # uuid.UUID(str(id)) == id
-# print(id)
-# shard_cursors[0].execute("SELECT guid FROM games_1 WHERE guid=:id", {"id": id})
-# print(shard_cursors[0].fetchall())
 
 # save changes
 shard_1.commit()
