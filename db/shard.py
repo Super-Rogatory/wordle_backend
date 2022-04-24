@@ -17,55 +17,87 @@ shard_3 = start_connection("stats_3")
 users = start_connection("users")
 
 c = conn.cursor()
-c_s1 = shard_1.cursor()
-c_s2 = shard_2.cursor()
-c_s3 = shard_3.cursor()
+shard_cursors = [
+    (shard_1.cursor(), "games_1"),
+    (shard_2.cursor(), "games_2"),
+    (shard_3.cursor(), "games_3"),
+]
 c_users = users.cursor()
 
 # FOR SHARDS: Allows the storage of guid as the unique identifier for records
 sqlite3.register_converter("GUID", lambda b: uuid.UUID(bytes_le=b))
 sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
+# Creates game table for each database and useful virtual tables (views) to query from
+for (shard_cursor, tbl_name) in shard_cursors:
+    shard_cursor.execute(f"DROP TABLE IF EXISTS {tbl_name}")
+    shard_cursor.executescript(
+        f"""
+        CREATE TABLE IF NOT EXISTS {tbl_name} (
+            guid GUID,
+            game_id INTEGER NOT NULL,
+            finished DATE DEFAULT CURRENT_TIMESTAMP,
+            guesses INTEGER,
+            won BOOLEAN,
+            PRIMARY KEY(guid, game_id)
+        );
+        CREATE INDEX IF NOT EXISTS games_won_idx ON {tbl_name}(won);
 
-c.execute("SELECT * FROM games")
-c_s1.execute("DROP TABLE IF EXISTS games_1")
-c_s1.execute(
-    """
-    CREATE TABLE IF NOT EXISTS games_1 (
-        guid GUID,
-        game_id INTEGER NOT NULL,
-        finished DATE DEFAULT CURRENT_TIMESTAMP,
-        guesses INTEGER,
-        won BOOLEAN,
-        PRIMARY KEY(guid, game_id)
+        CREATE VIEW IF NOT EXISTS wins
+        AS
+            SELECT
+                guid,
+                COUNT(won)
+            FROM
+                {tbl_name}
+            WHERE
+                won = TRUE
+            GROUP BY
+                guid
+            ORDER BY
+                COUNT(won) DESC;
+
+        CREATE VIEW IF NOT EXISTS streaks
+        AS
+            WITH ranks AS (
+                SELECT DISTINCT
+                    guid,
+                    finished,
+                    RANK() OVER(PARTITION BY guid ORDER BY finished) AS rank
+                FROM
+                    {tbl_name}
+                WHERE
+                    won = TRUE
+                ORDER BY
+                    guid,
+                    finished
+            ),
+            groups AS (
+                SELECT
+                    guid,
+                    finished,
+                    rank,
+                    DATE(finished, '-' || rank || ' DAYS') AS base_date
+                FROM
+                    ranks
+            )
+            SELECT
+                guid,
+                COUNT(*) AS streak,
+                MIN(finished) AS beginning,
+                MAX(finished) AS ending
+            FROM
+                groups
+            GROUP BY
+                guid, base_date
+            HAVING
+                streak > 1
+            ORDER BY
+                guid,
+                finished;
+        """
     )
-    """
-)
-c_s2.execute("DROP TABLE IF EXISTS games_2")
-c_s2.execute(
-    """
-    CREATE TABLE IF NOT EXISTS games_2 (
-        guid GUID,
-        game_id INTEGER NOT NULL,
-        finished DATE DEFAULT CURRENT_TIMESTAMP,
-        guesses INTEGER,
-        won BOOLEAN,
-        PRIMARY KEY(guid, game_id)
-    )
-"""
-)
-c_s3.execute("DROP TABLE IF EXISTS games_3")
-c_s3.execute(
-    """
-    CREATE TABLE IF NOT EXISTS games_3 (
-        guid GUID,
-        game_id INTEGER NOT NULL,
-        finished DATE DEFAULT CURRENT_TIMESTAMP,
-        guesses INTEGER,
-        won BOOLEAN,
-        PRIMARY KEY(guid, game_id)
-    )
-"""
-)
+
+# Creates users table
 c_users.execute("DROP TABLE IF EXISTS users")
 c_users.execute(
     """
@@ -76,6 +108,7 @@ c_users.execute(
     )
     """
 )
+
 # Use quote(guid) to access string value
 shard_1.commit()
 shard_2.commit()
@@ -92,6 +125,7 @@ for user in all_users_in_main_db:
         {"guid": uuid.uuid4(), "uid": user_id, "name": username},
     )
 
+# FOR USERS: ensures that users are copied successfully
 c_users.execute("SELECT * FROM users")
 records_in_users = c_users.fetchall()
 if len(records_in_users) == len(all_users_in_main_db):
@@ -100,6 +134,7 @@ else:
     print("Failed to copy from statistics db to users db!")
 
 # FOR SHARDS: now we are ready to shard!
+# recall that shard_cursors is a tuple. [2][0] to access the cursor of the third database
 # take a user record, then use main stats db to find all games tied to users - mirror that info into the sharded games db
 cases = {"shard_1": 0, "shard_2": 1, "shard_3": 2}
 for record in records_in_users:
@@ -109,7 +144,7 @@ for record in records_in_users:
     for game in games:
         (_, game_id, finished, guesses, won) = game
         if int(guid) % 3 == cases["shard_1"]:
-            c_s1.execute(
+            shard_cursors[0][0].execute(
                 "INSERT INTO games_1 VALUES (:guid, :gid, :finished, :guesses, :won)",
                 {
                     "guid": guid,
@@ -120,7 +155,7 @@ for record in records_in_users:
                 },
             )
         elif int(guid) % 3 == cases["shard_2"]:
-            c_s2.execute(
+            shard_cursors[1][0].execute(
                 "INSERT INTO games_2 VALUES (:guid, :gid, :finished, :guesses, :won)",
                 {
                     "guid": guid,
@@ -131,7 +166,7 @@ for record in records_in_users:
                 },
             )
         elif int(guid) % 3 == cases["shard_3"]:
-            c_s3.execute(
+            shard_cursors[2][0].execute(
                 "INSERT INTO games_3 VALUES (:guid, :gid, :finished, :guesses, :won)",
                 {
                     "guid": guid,
@@ -143,13 +178,13 @@ for record in records_in_users:
             )
 
 # FOR SHARDS: testing that the database has been sharded correctly with guid information
-c_s1.execute("SELECT * FROM games_1")
-c_s2.execute("SELECT * FROM games_2")
-c_s3.execute("SELECT * FROM games_3")
+shard_cursors[0][0].execute("SELECT * FROM games_1")
+shard_cursors[1][0].execute("SELECT * FROM games_2")
+shard_cursors[2][0].execute("SELECT * FROM games_3")
 c.execute("SELECT * FROM games")
-records_in_shard_1 = c_s1.fetchall()
-records_in_shard_2 = c_s2.fetchall()
-records_in_shard_3 = c_s3.fetchall()
+records_in_shard_1 = shard_cursors[0][0].fetchall()
+records_in_shard_2 = shard_cursors[1][0].fetchall()
+records_in_shard_3 = shard_cursors[2][0].fetchall()
 all_records_in_shards = (
     len(records_in_shard_1) + len(records_in_shard_2) + len(records_in_shard_3)
 )
@@ -164,8 +199,8 @@ else:
 # c_users.execute("SELECT * FROM users LIMIT 1")
 # id = c_users.fetchone()[0]  # uuid.UUID(str(id)) == id
 # print(id)
-# c_s1.execute("SELECT guid FROM games_1 WHERE guid=:id", {"id": id})
-# print(c_s1.fetchall())
+# shard_cursors[0].execute("SELECT guid FROM games_1 WHERE guid=:id", {"id": id})
+# print(shard_cursors[0].fetchall())
 
 # save changes
 shard_1.commit()

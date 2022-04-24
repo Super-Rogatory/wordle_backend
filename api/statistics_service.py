@@ -65,45 +65,47 @@ sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
 # every route connects to a db, depending on env
 @app.get("/statistics/top_ten_in_wins")
 async def get_top_ten_in_wins():
-    with get_db() as db:
-        try:
-            users_c = users_db.cursor()
-            c = db.cursor()
-            # retrieve the name of the table
-            c.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            table_name = c.fetchone()[0]
-            # get the top 10 player's uuid and number of wins
-            c.execute(
-                f"""
-                    SELECT guid, COUNT(won) AS wins FROM {table_name} WHERE won=1 GROUP BY guid ORDER BY wins DESC LIMIT 10
-                """
-            )
-            games = c.fetchall()
-            names = []
-            # loop through each game record (uuid, win_count) and select the username that matches the uuid
-            for (id, _) in games:
-                users_c.execute(
-                    f"SELECT username FROM users WHERE guid=:id", {"id": id}
-                )
-                name = users_c.fetchone()[0]
-                names.append(name)
-            print(names)
-        except Exception as e:
-            print(f"An error has occured! => {e}")
+    # don't user get_db here
+    # with get_db() as db:
+    #     try:
+    #         users_c = users_db.cursor()
+    #         c = db.cursor()
+    #         # retrieve the name of the table
+    #         c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    #         table_name = c.fetchone()[0]
+    #         # get the top 10 player's uuid and number of wins
+    #         c.execute(
+    #             f"""
+    #                 SELECT guid, COUNT(won) AS wins FROM {table_name} WHERE won=1 GROUP BY guid ORDER BY wins DESC LIMIT 10
+    #             """
+    #         )
+    #         games = c.fetchall()
+    #         names = []
+    #         # loop through each game record (uuid, win_count) and select the username that matches the uuid
+    #         for (id, _) in games:
+    #             users_c.execute(
+    #                 f"SELECT username FROM users WHERE guid=:id", {"id": id}
+    #             )
+    #             name = users_c.fetchone()[0]
+    #             names.append(name)
+    #         print(names)
+    #     except Exception as e:
+    #         print(f"An error has occured! => {e}")
 
-        return {"users": names}
+    #     return {"users": names}
 
 
 @app.get("/statistics/top_ten_in_streaks")
-async def get_top_ten_in_streaks(db: sqlite3.Connection = Depends(get_db)):
-    c = db.cursor()
-    c.execute(
-        """
-            SELECT username FROM users JOIN streaks USING(user_id) ORDER BY streak DESC LIMIT 10
-        """
-    )
-    res = c.fetchall()
-    return {"users": res}
+async def get_top_ten_in_streaks():
+    # don't user get_db here
+    # c = db.cursor()
+    # c.execute(
+    #     """
+    #         SELECT username FROM users JOIN streaks USING(user_id) ORDER BY streak DESC LIMIT 10
+    #     """
+    # )
+    # res = c.fetchall()
+    # return {"users": res}
 
 
 @app.get("/statistics/{user_id}")
