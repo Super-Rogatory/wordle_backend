@@ -1,6 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from utils import start_connection
 
+from pydantic import BaseSettings
+
+
+class Settings(BaseSettings):
+    database: str
+
+    class Config:
+        env_file = "./api/words.env"
+
+
+settings = Settings()
 app = FastAPI()
 
 

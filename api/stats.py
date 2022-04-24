@@ -8,10 +8,9 @@ from pydantic import BaseSettings
 
 class Settings(BaseSettings):
     database: str
-    logging_config: str
 
     class Config:
-        env_file = "stats.env"
+        env_file = "./api/stats.env"
 
 
 settings = Settings()
