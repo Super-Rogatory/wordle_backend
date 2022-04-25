@@ -1,7 +1,6 @@
 import sqlite3
 import uuid
-from contextlib import closing, contextmanager
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from utils import (
     start_connection,
     validate_game_result,
@@ -150,62 +149,75 @@ async def get_statistics(username: str):
     except Exception as e:
         print(f"An error has occured! => {e}")
 
-    # # use helper functions to parse data instead of making extra calls to db
-    # (cur_streak, max_streak) = get_streak(res)
-    # guesses = get_guesses(res)
-    # (win_percentage, games_played, games_won, avg_guesses) = analyze_guess_data(guesses)
-    # return {
-    #     "stats": {
-    #         "currentStreak": cur_streak,
-    #         "maxStreak": max_streak,
-    #         "guesses": guesses,
-    #         "winPercentage": win_percentage,
-    #         "gamesPlayed": games_played,
-    #         "gamesWon": games_won,
-    #         "averageGuesses": avg_guesses,
-    #     }
-    # }
 
+@app.post("/statistics/game_result/{username}")
+async def game_result(username: str, game: Game):
+    user_guid = -1
+    # try to find the user in the db. if cannot find - raise HTTPException.
+    try:
+        users_cur = users_db.cursor()
+        # find the user id from the username(since usname is unique)
+        users_cur.execute(
+            "SELECT guid FROM users WHERE username=:name", {"name": username}
+        )
+        result = users_cur.fetchone()
+        user_guid = result[0] if result != None else -1
+    except Exception as e:
+        print(f"An error has occured! => {e}")
 
-# @app.post("/statistics/game_result/{user_id}")
-# async def game_result(
-#     user_id: int, game: Game, db: sqlite3.Connection = Depends(get_db)
-# ):
-#     c = db.cursor()
-#     # validate query
-#     isValid = validate_game_result(game.game_status, game.finished, game.guesses)
-#     if not isValid:
-#         raise HTTPException(status_code=400, detail="Query is invalid.")
+    # if user_guid is still -1, we did not find a user.
+    if type(user_guid) == int and user_guid == -1:
+        raise HTTPException(status_code=400, detail="User not found in database.")
 
-#     # avoiding duplicate dates - doesn't make sense for wordle game.
-#     c.execute(
-#         "SELECT * FROM games WHERE finished=:date_finished AND user_id=:uid",
-#         {"date_finished": game.finished, "uid": user_id},
-#     )
-#     res = c.fetchall()
-#     if len(res):
-#         raise HTTPException(status_code=400, detail="Duplicate dates error.")
+    # validate query
+    isValid = validate_game_result(game.game_status, game.finished, game.guesses)
+    if not isValid:
+        raise HTTPException(status_code=400, detail="Query is invalid.")
 
-#     # uid and gid uniquely identify game, update properties
-#     c.execute(
-#         """
-#             INSERT INTO games
-#             VALUES (:uid, :gid, :finished, :guesses, :won)
-#         """,
-#         {
-#             "uid": user_id,
-#             "gid": game.game_id,
-#             "finished": game.finished,
-#             "guesses": game.guesses,
-#             "won": game.game_status,
-#         },
-#     )
-#     db.commit()
-#     # retreive information after update to ensure it has updated.
-#     c.execute(
-#         "SELECT * FROM games WHERE game_id=:gid AND user_id=:uid",
-#         {"gid": game.game_id, "uid": user_id},
-#     )
-#     res = c.fetchone()
+    # locate the shard that contains the user information
+    try:
+        # we're iterating through each (connection, tablename) in our shard connections list.
+        # as soon as we identify the user in one of the shards, break.
+        # we'll still have access to the connection and tbl_name from the moment looping stops
+        for (connection, tbl_name) in shard_connections:
+            cur = connection.cursor()
+            cur.execute(f"SELECT * FROM {tbl_name} WHERE guid=:id", {"id": user_guid})
+            # once you match the id to a shard, fetch data from db to be filtered
+            if cur.fetchall() != False:
+                # since there is more logic here - for readability track index
+                break
+        # cur comes from match loop ^
+        cur.execute(
+            f"SELECT * FROM {tbl_name} WHERE finished=:date_finished AND guid=:uid",
+            {"date_finished": game.finished, "uid": user_guid},
+        )
+    except Exception as e:
+        print(f"An error has occured! => {e}")
 
-#     return {"gameResults": res}
+    # if there is a record with duplicate date attached to same user - break - error
+    if len(cur.fetchall()):
+        raise HTTPException(status_code=400, detail="Duplicate dates error.")
+
+    # insert new records in sharded games table
+    cur.execute(
+        f"""
+            INSERT INTO {tbl_name}
+            VALUES (:uid, :gid, :finished, :guesses, :won)
+        """,
+        {
+            "uid": user_guid,
+            "gid": game.game_id,
+            "finished": game.finished,
+            "guesses": game.guesses,
+            "won": game.game_status,
+        },
+    )
+    connection.commit()
+    # retreive information after update to ensure it has updated.
+    cur.execute(
+        f"SELECT * FROM {tbl_name} WHERE game_id=:gid AND guid=:uid",
+        {"gid": game.game_id, "uid": user_guid},
+    )
+    res = cur.fetchone()
+
+    return {"gameResults": res}
