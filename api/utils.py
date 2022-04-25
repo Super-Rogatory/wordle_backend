@@ -1,4 +1,3 @@
-import enum
 from multipledispatch import dispatch
 import sqlite3
 import re
@@ -65,8 +64,8 @@ def get_streak(query):
     # next_date = prev_date + timedelta(days=1)
     for i in range(0, len(query) - 1):
         # get prev date and cur date.
-        prev_date = date.fromisoformat(query[i][FINISHED_DATE])
-        cur_date = date.fromisoformat(query[i + 1][FINISHED_DATE])
+        prev_date = query[i][FINISHED_DATE]
+        cur_date = query[i + 1][FINISHED_DATE]
         game_won = query[i + 1][GAME_STATUS]
         # check to see if next date is one day from cur date
         if prev_date + timedelta(days=1) == cur_date and game_won:
@@ -110,7 +109,8 @@ def analyze_guess_data(guess_obj):
     return (win_percentage, total, wins, avg_guesses)
 
 
-# FILTER TOP WINS - returns guid and number of wins for top acheivers!
-def filter_top_wins(list_of_wins):
-    # create filter algo
-    return 0
+# FILTER VALUES - returns guid and number of wins or streaks for top acheivers!
+def filter_values(list_of_vals):
+    # sort the array based on second property of each element tuple (wins)
+    list_of_vals.sort(reverse=True, key=lambda x: x[1])
+    return list_of_vals[0:10]
