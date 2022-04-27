@@ -9,9 +9,8 @@ from utils import (
     analyze_guess_data,
     filter_values,
 )
-from pydantic import BaseModel, BaseSettings
+from pydantic import BaseModel
 
-app = FastAPI()
 
 # defines a valid game in request body
 class Game(BaseModel):
@@ -27,6 +26,7 @@ class Game(BaseModel):
 
 
 # Connect to necessary dependencies
+app = FastAPI()
 # settings = Settings()
 users_db = start_connection("users")
 shard_connections = [

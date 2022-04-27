@@ -3,9 +3,6 @@ from utils import start_connection
 from validation_service import check_word
 import random
 
-from pydantic import BaseSettings
-
-
 app = FastAPI()
 
 # connect to answers database
