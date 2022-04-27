@@ -55,7 +55,7 @@ To get a local copy up and running follow these simple example steps.
 4. Run either the checkings or validation service (or both!)
    ```sh
    cd ../
-   foreman start
+   foreman start api
    ```
 5. Travel to http://127.0.0.1:9999/api/checkings/docs or http://127.0.0.1:9999/api/statistics/docs or http://127.0.0.1:9999/api/validations/docs (depends on the values inputted for which service you wish to test)
 6. Once there you can test out the routes!
