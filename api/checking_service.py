@@ -6,14 +6,6 @@ import random
 from pydantic import BaseSettings
 
 
-class Settings(BaseSettings):
-    database: str
-
-    class Config:
-        env_file = "./api/answers.env"
-
-
-settings = Settings()
 app = FastAPI()
 
 # connect to answers database

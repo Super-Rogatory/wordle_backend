@@ -1,7 +1,0 @@
-[entryPoints]
-  [entryPoints.http]
-    address = ":9999"
-
-[providers]
-  [providers.file]
-    filename = "./etc/routes.toml"
