@@ -104,7 +104,7 @@ def analyze_guess_data(guess_obj):
             wins += value
             avg_guesses += int(key) * value  # 1 * 4 + 2 * 2 ... x/6
     total = wins + losses
-    win_percentage = round(wins / total, 1) * 100  # calculate win percentage
+    win_percentage = round(wins / total, 2) * 100  # calculate win percentage
     avg_guesses = round(avg_guesses / wins)
     return (win_percentage, total, wins, avg_guesses)
 
