@@ -1,6 +1,7 @@
 from multipledispatch import dispatch
 import sqlite3
 import re
+from datetime import date, timedelta
 
 
 @dispatch(int)
@@ -18,7 +19,7 @@ def start_connection(n):
         return conn
 
     except sqlite3.Error as error:
-        print("Error occurred while connecting to word list database.", error)
+        print(f"Error occurred while connecting to {options[n]} database.", error)
 
 
 @dispatch(str)
@@ -35,11 +36,12 @@ def start_connection(name=""):
         return conn
 
     except sqlite3.Error as error:
-        print("Error occurred while connecting to word list database.", error)
+        print(f"Error occurred while connecting to {name} database.", error)
 
 
 # VALIDATE_GAME_RESULT - takes in specified parameters that are validated to ensure data consistency
 def validate_game_result(status, finished, guesses):
+    today = date.today().strftime("%Y-%m-%d")
     isValid = True
     # if guesses or status isn't in a valid range
     if guesses not in range(1, 7) or status not in range(0, 2):
@@ -47,17 +49,35 @@ def validate_game_result(status, finished, guesses):
     # if date doesn't match regex..
     if re.search("^\d{4}-\d{2}-\d{2}$", finished) == None:
         isValid = False
+    # if finished_date is ahead of present time..
+    if finished > today:
+        isValid = False
     return isValid
 
 
 # GET_STREAK - takes in array of streak tuples and returns cur_streak, max_streak
-def get_streak(streaks):
+def get_streak(query):
+    FINISHED_DATE = 0
+    GAME_STATUS = 2
     cur_streak = 0
     max_streak = 0
-    for (streak, _, _) in streaks:
-        cur_streak = 0 if streak == None else streak
+    # next_date = prev_date + timedelta(days=1)
+    for i in range(0, len(query) - 1):
+        # get prev date and cur date.
+        prev_date = query[i][FINISHED_DATE]
+        cur_date = query[i + 1][FINISHED_DATE]
+        game_won = query[i + 1][GAME_STATUS]
+        # check to see if next date is one day from cur date
+        if prev_date + timedelta(days=1) == cur_date and game_won:
+            cur_streak += 1
+        else:
+            if game_won:
+                cur_streak = 1
+            else:
+                cur_streak = 0
+        # set max streak to cur streak if cur streak is new max.
         if cur_streak > max_streak:
-            max_streak = streak
+            max_streak = cur_streak
     return (cur_streak, max_streak)
 
 
@@ -84,6 +104,13 @@ def analyze_guess_data(guess_obj):
             wins += value
             avg_guesses += int(key) * value  # 1 * 4 + 2 * 2 ... x/6
     total = wins + losses
-    win_percentage = round(wins / total, 1) * 100  # calculate win percentage
+    win_percentage = round(wins / total, 2) * 100  # calculate win percentage
     avg_guesses = round(avg_guesses / wins)
     return (win_percentage, total, wins, avg_guesses)
+
+
+# FILTER VALUES - returns guid and number of wins or streaks for top acheivers!
+def filter_values(list_of_vals):
+    # sort the array based on second property of each element tuple (wins)
+    list_of_vals.sort(reverse=True, key=lambda x: x[1])
+    return list_of_vals[0:10]

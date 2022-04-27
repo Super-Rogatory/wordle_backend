@@ -23,7 +23,7 @@ ID = 0
 WORD = 1
 
 
-@app.post("/validation/checkword")
+@app.post("/checkword")
 async def check_word(name: str):
     c.execute("SELECT DISTINCT * FROM words WHERE name=:name LIMIT 1", {"name": name})
     isValid = len(c.fetchall())  # returns 0 or 1 depending on if word exists.
@@ -32,7 +32,7 @@ async def check_word(name: str):
     return {"isValidWord": status}
 
 
-@app.post("/validation/addword", status_code=201)
+@app.post("/addword", status_code=201)
 async def add_word(name: str):
     # if length does not match five-letter requirement - raise error
     if len(name.strip()) != 5:
@@ -60,7 +60,7 @@ async def add_word(name: str):
     return {"word": obj}
 
 
-@app.delete("/validation/removeword", status_code=204)
+@app.delete("/removeword", status_code=204)
 async def remove_word(name: str):
     c.execute("DELETE FROM words WHERE name=:name", {"name": name})
     conn.commit()
