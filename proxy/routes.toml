@@ -1,0 +1,47 @@
+[http]
+  [http.middlewares]
+
+    [http.middlewares.api-stripprefix.stripPrefix]
+      prefixes = ["/api/statistics", "/api/checkings", "/api/validations"]
+
+
+  [http.routers]
+
+    [http.routers.checkings-http]
+      entryPoints = ["http"]
+      service = "checkings"
+      rule = "PathPrefix(`/api/checkings`)"
+      middlewares = ["api-stripprefix"]
+
+    [http.routers.statistics-http]
+      entryPoints = ["http"]
+      service = "statistics"
+      rule = "PathPrefix(`/api/statistics`)"
+      middlewares = ["api-stripprefix"]
+
+    [http.routers.validations-http]
+      entryPoints = ["http"]
+      service = "validations"
+      rule = "PathPrefix(`/api/validations`)"
+      middlewares = ["api-stripprefix"]      
+
+  [http.services]
+
+    [http.services.checkings]
+      [http.services.checkings.loadBalancer]
+        [[http.services.checkings.loadBalancer.servers]]
+          url = "http://127.0.0.1:5000" 
+
+    [http.services.statistics]
+      [http.services.statistics.loadBalancer]
+        [[http.services.statistics.loadBalancer.servers]]
+          url = "http://127.0.0.1:5050"
+        [[http.services.statistics.loadBalancer.servers]]
+          url = "http://127.0.0.1:5050"
+        [[http.services.statistics.loadBalancer.servers]]
+          url = "http://127.0.0.1:5050"
+                
+    [http.services.validations]
+      [http.services.validations.loadBalancer]
+        [[http.services.validations.loadBalancer.servers]]
+          url = "http://127.0.0.1:5500"            

@@ -40,7 +40,7 @@ sqlite3.register_converter("GUID", lambda b: uuid.UUID(bytes_le=b))
 sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
 
 # every route connects to a db, depending on env
-@app.get("/statistics/top_ten_in_wins")
+@app.get("/top_ten_in_wins")
 async def get_top_ten_in_wins():
     shard_scan_results = []
     stats = []
@@ -65,7 +65,7 @@ async def get_top_ten_in_wins():
         print(f"An error has occured! => {e}")
 
 
-@app.get("/statistics/top_ten_in_streaks")
+@app.get("/top_ten_in_streaks")
 async def get_top_ten_in_streaks():
     shard_scan_results = []
     stats = []
@@ -86,13 +86,13 @@ async def get_top_ten_in_streaks():
                 f"SELECT username FROM users WHERE guid=:id", {"id": guid}
             )
             name = users_cur.fetchone()[0]
-            stats.append({{"name": name, "streak": streak}})
+            stats.append({"name": name, "streak": streak})
         return stats
     except Exception as e:
         print(f"An error has occured! => {e}")
 
 
-@app.get("/statistics/{username}")
+@app.get("/{username}")
 async def get_statistics(username: str):
     user_guid = -1
     query_results = []
@@ -150,7 +150,7 @@ async def get_statistics(username: str):
         print(f"An error has occured! => {e}")
 
 
-@app.post("/statistics/game_result/{username}")
+@app.post("/game_result/{username}")
 async def game_result(username: str, game: Game):
     user_guid = -1
     # try to find the user in the db. if cannot find - raise HTTPException.

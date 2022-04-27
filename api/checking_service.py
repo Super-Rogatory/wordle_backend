@@ -15,7 +15,7 @@ ID = 1
 WORD = 2
 
 
-@app.post("/checking/checkanswer")
+@app.post("/checkanswer")
 async def check_answer(answer: str):
     # grab word of the day
     c.execute("SELECT * FROM answers WHERE cur_word=1")
@@ -46,7 +46,7 @@ async def check_answer(answer: str):
     return {"answerResults": "Correct" if isCorrect else word_status}
 
 
-@app.put("/checking/changeanswer")
+@app.put("/changeanswer")
 async def change_answer():
     # find maxId for random function
     c.execute("SELECT id FROM answers ORDER BY id DESC LIMIT 1")

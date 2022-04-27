@@ -44,6 +44,7 @@ To get a local copy up and running follow these simple example steps.
 2. In the root directory of the app folder, create a .env and set values for CHECKING_PORT and VALIDATION_PORT
     ```
     CHECKING_PORT=5000
+    STATS_PORT=5050
     VALIDATION_PORT=5500
     ```
 3. Seed the database! (you may need to change permissions on your local machine)
@@ -54,9 +55,9 @@ To get a local copy up and running follow these simple example steps.
 4. Run either the checkings or validation service (or both!)
    ```sh
    cd ../
-   foreman start --formation checkings=1,validations=1,statistics=3   
+   foreman start --formation checkings=1,validations=1,stats=3,traefik=1  
    ```
-5. Travel to http://127.0.0.1:5000/docs or http://127.0.0.1:5500/docs (depends on the values inputted for CHECKING_PORT and VALIDATION_PORT)
+5. Travel to http://127.0.0.1:9999/api/checkings/docs or http://127.0.0.1:9999/api/statistics/docs or http://127.0.0.1:9999/api/validations/docs (depends on the values inputted for which service you wish to test)
 6. Once there you can test out the routes!
 
 
