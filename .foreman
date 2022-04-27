@@ -1,0 +1,1 @@
+formation: foreman start --formation checkings=1,validations=1,stats=3,traefik=1 
