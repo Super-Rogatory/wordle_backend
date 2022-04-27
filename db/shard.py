@@ -100,13 +100,15 @@ for (shard_cursor, tbl_name) in shard_cursors:
 
 # Creates users table
 c_users.execute("DROP TABLE IF EXISTS users")
-c_users.execute(
+c_users.executescript(
     """
     CREATE TABLE IF NOT EXISTS users (
         guid GUID PRIMARY KEY,
         user_id INTEGER NOT NULL,
         username VARCHAR UNIQUE
-    )
+    );
+
+    CREATE INDEX IF NOT EXISTS users_name_idx ON users(username);
     """
 )
 

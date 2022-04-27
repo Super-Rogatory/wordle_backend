@@ -21,13 +21,13 @@ class Game(BaseModel):
 
 
 # Allows us to retrieve NAME_OF_DB from Procfile
-class Settings(BaseSettings):
-    name_of_db: str
+# class Settings(BaseSettings):
+#     name_of_db: str
 
 
 # Connect to necessary dependencies
 app = FastAPI()
-settings = Settings()
+# settings = Settings()
 users_db = start_connection("users")
 shard_connections = [
     (start_connection("stats_1"), "games_1"),
@@ -43,7 +43,7 @@ sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
 @app.get("/statistics/top_ten_in_wins")
 async def get_top_ten_in_wins():
     shard_scan_results = []
-    names = []
+    stats = []
     try:
         users_cur = users_db.cursor()
         # for every shard get their top ten then use filter func to sort and filter
@@ -54,13 +54,13 @@ async def get_top_ten_in_wins():
                 shard_scan_results.append(result)
         filtered_list = filter_values(shard_scan_results)  # utilizing helper function
         # query each guid for the username that it is linked to
-        for (guid, _) in filtered_list:
+        for (guid, wins) in filtered_list:
             users_cur.execute(
                 f"SELECT username FROM users WHERE guid=:id", {"id": guid}
             )
             name = users_cur.fetchone()[0]
-            names.append(name)
-        return names
+            stats.append({"name": name, "wins": wins})
+        return stats
     except Exception as e:
         print(f"An error has occured! => {e}")
 
@@ -68,7 +68,7 @@ async def get_top_ten_in_wins():
 @app.get("/statistics/top_ten_in_streaks")
 async def get_top_ten_in_streaks():
     shard_scan_results = []
-    names = []
+    stats = []
     try:
         users_cur = users_db.cursor()
         # for every shard get their top ten then use filter func to sort and filter
@@ -81,13 +81,13 @@ async def get_top_ten_in_streaks():
                 shard_scan_results.append(result)
         filtered_list = filter_values(shard_scan_results)  # utilizing helper function
         # query each guid for the username that it is linked to
-        for (guid, _) in filtered_list:
+        for (guid, streak) in filtered_list:
             users_cur.execute(
                 f"SELECT username FROM users WHERE guid=:id", {"id": guid}
             )
             name = users_cur.fetchone()[0]
-            names.append(name)
-        return names
+            stats.append({{"name": name, "streak": streak}})
+        return stats
     except Exception as e:
         print(f"An error has occured! => {e}")
 
