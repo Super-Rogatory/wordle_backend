@@ -9,7 +9,7 @@ from utils import (
     analyze_guess_data,
     filter_values,
 )
-from pydantic import BaseModel, BaseSettings
+from pydantic import BaseModel
 
 
 # defines a valid game in request body
@@ -117,7 +117,7 @@ async def get_statistics(username: str):
             cur = connection.cursor()
             cur.execute(f"SELECT * FROM {tbl_name} WHERE guid=:id", {"id": user_guid})
             # once you match the id to a shard, fetch data from db to be filtered
-            if cur.fetchall() != False:
+            if cur.fetchall() != []:
                 cur.execute(
                     f"""
                         SELECT finished, guesses, won
@@ -183,7 +183,7 @@ async def game_result(username: str, game: Game):
             cur = connection.cursor()
             cur.execute(f"SELECT * FROM {tbl_name} WHERE guid=:id", {"id": user_guid})
             # once you match the id to a shard, fetch data from db to be filtered
-            if cur.fetchall() != False:
+            if cur.fetchall() != []:
                 # since there is more logic here - for readability track index
                 break
         # cur comes from match loop ^
