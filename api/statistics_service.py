@@ -20,11 +20,6 @@ class Game(BaseModel):
     game_status: bool
 
 
-# Allows us to retrieve NAME_OF_DB from Procfile
-# class Settings(BaseSettings):
-#     name_of_db: str
-
-
 # Connect to necessary dependencies
 app = FastAPI()
 # settings = Settings()
