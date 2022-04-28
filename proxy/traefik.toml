@@ -4,4 +4,4 @@
 
 [providers]
   [providers.file]
-    filename = "routes.toml" 
+    filename = "./proxy/routes.toml" 
