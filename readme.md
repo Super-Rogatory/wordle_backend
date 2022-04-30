@@ -1,4 +1,4 @@
-# Microservice Implementation with FastAPI | Foreman | SQLite3
+# Microservice Implementation with FastAPI
 
 <!-- ABOUT THE PROJECT -->
 ## Contributors
