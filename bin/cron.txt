@@ -1,0 +1,1 @@
+*/10 * * * * . ~/.bash_profile && run-one bash -l $($PROJ_PATH/bin/leaderboard.sh >> $PROJ_PATH/var/log/cron.log 2>&1)
