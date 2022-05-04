@@ -47,9 +47,9 @@
     [http.services.statistics]
       [http.services.statistics.loadBalancer]
         [[http.services.statistics.loadBalancer.servers]]
-          url = "http://127.0.0.1:5300"
+          url = "http://127.0.0.1:5400"
         [[http.services.statistics.loadBalancer.servers]]
-          url = "http://127.0.0.1:5301"
+          url = "http://127.0.0.1:5401"
         [[http.services.statistics.loadBalancer.servers]]
-          url = "http://127.0.0.1:5302"
+          url = "http://127.0.0.1:5402"
           
