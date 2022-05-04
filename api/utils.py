@@ -55,6 +55,14 @@ def validate_game_result(status, finished, guesses):
     return isValid
 
 
+# VALIDATE_CLIENT - makes sure valid user_id and game_id is entered
+def validate_client(client):
+    isValid = True
+    if client.user_id <= 0 or client.game_id <= 0:
+        isValid = False
+    return isValid
+
+
 # GET_STREAK - takes in array of streak tuples and returns cur_streak, max_streak
 def get_streak(query):
     FINISHED_DATE = 0
