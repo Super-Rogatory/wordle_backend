@@ -5,6 +5,9 @@
 # binary dependencies
 **/traefik
 
+# ignore large stats db population sql file
+**/sqlite3-populated.sql
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
