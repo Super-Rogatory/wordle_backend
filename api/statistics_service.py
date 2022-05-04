@@ -46,13 +46,17 @@ sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
 @app.get("/top10/streaks")
 def top10_streaks():
     top10streaks = r.zrevrange(name="streaks", start=0, end=9, withscores=True)
-    return json.dumps(top10streaks)
+    result = json.dumps(top10streaks)
+    top10 = json.loads(result)
+    return top10
 
 
 @app.get("/top10/wins")
 def top10_wins():
     top10wins = r.zrevrange(name="wins", start=0, end=9, withscores=True)
-    return json.dumps(top10wins)
+    result = json.dumps(top10wins)
+    top10 = json.loads(result)
+    return top10
 
 
 # every route connects to a db, depending on env
