@@ -51,6 +51,15 @@ sqlite-utils insert ./db/answers.db answers ./db/answers.json --pk=id # sqlite3 
 rm ./db/answers.json
 
 
+if [ ! -f "./share/sqlite3-populated.sql" ]
+then
+    mkdir -p ./share && \
+    curl --silent -L -o sqlite3-populated.sql https://raw.githubusercontent.com/ProfAvery/cpsc449/master/stats/share/sqlite3-populated.sql && \
+    mv ./sqlite3-populated.sql ./share
+else
+    echo "sqlite3-populated.sql already exists"
+fi
+
 
 # build full statistics.db if it doesn't exist
 if [ ! -f "./db/statistics.db" ]

@@ -7,6 +7,7 @@ rm -r \
     dump.rdb \
     *.spec \
     traefik \
+    share \
     2> /dev/null 
 #remove crontab
 crontab -r
