@@ -7,7 +7,7 @@
 - **Chukwudi Ikem**
 - **Madison Jordan**
 - **James Talavera**
-- **Farnam Keshavarzian**
+- **Jose Hernandez**
 
 ### Built With
 
@@ -44,6 +44,8 @@ To get a local copy up and running follow these simple example steps.
     python3 -m pip install -r requirements.txt
   ```
 
+---
+
 ### Project Setup
 
 #### Database Population
@@ -79,6 +81,8 @@ proceed to service start
    foreman start
    ```
 
+---
+
 ### Test Running Services
 
 1. Travel to
@@ -87,6 +91,6 @@ proceed to service start
    c. http://127.0.0.1:9999/api/validations/docs
    d. http://127.0.0.1:9999/api/trackings/docs
 
-_depends on the values inputted for which service you wish to test_
+   _depends on the values inputted for which service you wish to test_
 
 2. Once there you can test out the routes!
