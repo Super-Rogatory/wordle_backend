@@ -45,6 +45,7 @@ To get a local copy up and running follow these simple example steps.
 2. In the root directory of the app folder, create a .env and set values for CHECKING_PORT and VALIDATION_PORT
     ```
     CHECKING_PORT=5000
+    TRACKING_PORT=5200
     VALIDATION_PORT=5500
     ```
 3. Seed the database! (you may need to change permissions on your local machine)
