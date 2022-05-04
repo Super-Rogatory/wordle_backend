@@ -81,7 +81,7 @@ To get a local copy up and running follow these simple example steps.
    echo -e "CHECKING_PORT=5000\nVALIDATION_PORT=5500" > .env
    ```
 
-2. Run the services (or both!)
+2. Run the services
    ```sh
    foreman start
    ```
