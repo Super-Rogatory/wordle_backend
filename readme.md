@@ -24,6 +24,8 @@
 
 To get a local copy up and running follow these simple example steps.
 
+---
+
 ### Dependency Installation
 
 - Make sure to have python3 and pip installed on your computer.
@@ -46,16 +48,16 @@ To get a local copy up and running follow these simple example steps.
 
 ---
 
-### Project Setup
+## Project Setup
 
-#### Database Population
+### Database Population
 
 1. Seed the database! (you may need to change permissions on your local machine)
    ```sh
    ./db/db_seed.sh
    ```
 
-#### Leaderboard Cronjob
+### Leaderboard Cronjob
 
 1. make sure cron is running. if not use `sudo service cron start`
 
@@ -65,9 +67,9 @@ To get a local copy up and running follow these simple example steps.
    ./bin/init.sh
    ```
 
-proceed to service start
+   _proceed to service start instructions_
 
-#### Service Start
+### Service Start
 
 1. In the root directory of the app folder, create a .env and set values for CHECKING_PORT and VALIDATION_PORT
 
