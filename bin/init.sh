@@ -7,4 +7,4 @@ echo "export PROJ_PATH=$(pwd)" >> ~/.bash_profile && . ~/.bash_profile
 # pyinstaller --onefile ./bin/python/getTop10.py
 
 # start cronjob
-. ~/.bash_profile crontab $PROJ_PATH/bin/cron.txt && mkdir -p $PROJ_PATH/var/log
+crontab ./bin/cron.txt && mkdir -p ./var/log
