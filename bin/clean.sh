@@ -6,7 +6,7 @@ rm -r \
     bin/__pycache__ \
     dump.rdb \
     *.spec \
-    traefik \
+    **/traefik \
     share \
     2> /dev/null 
 #remove crontab
