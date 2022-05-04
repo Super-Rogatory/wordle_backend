@@ -38,7 +38,7 @@ To get a local copy up and running follow these simple example steps.
 - Clone the repo
 
   ```sh
-  git clone https://github.com/Super-Rogatory/wordle_backend
+  git clone <repo.git>
   ```
 
 - Install FastAPI and other tools from requirements
