@@ -4,7 +4,7 @@
 echo "export PROJ_PATH=$(pwd)" >> ~/.bash_profile && . ~/.bash_profile
 
 # TODO: build standalone app
-# pyinstaller --onefile $PROJ_PATH/bin/python/getTop10.py
+# pyinstaller --onefile ./bin/python/getTop10.py
 
 # start cronjob
-crontab $PROJ_PATH/bin/cron.txt
+. ~/.bash_profile crontab $PROJ_PATH/bin/cron.txt
