@@ -1,2 +1,2 @@
-formation: traefik=1,validations=1,checkings=1,trackings=1,stats=3,redis=1
+formation: traefik=1,validations=1,checkings=1,trackings=1,stats=3
 
