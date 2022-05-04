@@ -56,20 +56,6 @@ To get a local copy up and running follow these simple example steps.
    ```sh
    ./bin/db_seed.sh
    ```
-<<<<<<< HEAD
-2. In the root directory of the app folder, create a .env and set values for CHECKING_PORT and VALIDATION_PORT
-    ```
-    CHECKING_PORT=5000
-    TRACKING_PORT=5200
-    VALIDATION_PORT=5500
-    ```
-3. Seed the database! (you may need to change permissions on your local machine)
-   ```sh
-   cd db/
-   ./db_seed.sh
-   ```    
-4. Run either the checkings or validation service (or both!)
-=======
 
 ---
 
@@ -92,11 +78,10 @@ To get a local copy up and running follow these simple example steps.
 1. In the root directory of the app folder, create a .env and set values for CHECKING_PORT and VALIDATION_PORT
 
    ```
-   echo -e "CHECKING_PORT=5000\nVALIDATION_PORT=5500" > .env
+   echo -e "CHECKING_PORT=5000\nTRACKING_PORT=5200\nVALIDATION_PORT=5500" > .env
    ```
 
 2. Run the services
->>>>>>> d6dabfa8480d392ecf8d5e989a4183f2f022824c
    ```sh
    foreman start
    ```
