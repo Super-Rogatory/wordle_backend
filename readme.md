@@ -87,9 +87,12 @@ To get a local copy up and running follow these simple example steps.
    foreman start
    ```
 
+---
+
 ## Test Running Services
 
 1. Travel to
+
    a. http://127.0.0.1:9999/api/checkings/docs
    b. http://127.0.0.1:9999/api/statistics/docs
    c. http://127.0.0.1:9999/api/validations/docs
