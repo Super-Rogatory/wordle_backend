@@ -57,6 +57,8 @@ To get a local copy up and running follow these simple example steps.
    ./db/db_seed.sh
    ```
 
+---
+
 ### Leaderboard Cronjob
 
 1. make sure cron is running. if not use `sudo service cron start`
@@ -68,6 +70,8 @@ To get a local copy up and running follow these simple example steps.
    ```
 
    _proceed to service start instructions_
+
+---
 
 ### Service Start
 
@@ -83,9 +87,7 @@ To get a local copy up and running follow these simple example steps.
    foreman start
    ```
 
----
-
-### Test Running Services
+## Test Running Services
 
 1. Travel to
    a. http://127.0.0.1:9999/api/checkings/docs
