@@ -8,6 +8,7 @@ rm -r \
     *.spec \
     **/traefik \
     share \
+    ~/wordle.env \
     2> /dev/null 
 #remove crontab
 crontab -r
