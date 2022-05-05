@@ -9,10 +9,10 @@ rm -rf temp
 rm traefik.tar.gz
 
 # add project directory to env variable for cron
-echo "export PROJ_PATH=$(pwd)" > ~/.bash_profile && . ~/.bash_profile
+echo "export PROJ_PATH=$(pwd)" > ~/wordle.env && . ~/wordle.env
 
 # TODO: build standalone app
-# pyinstaller --onefile ./bin/python/getTop10.py
+# pyinstaller --onefile ./bin/Top10.py
 
 # start redis-server in background
 redis-server --daemonize yes
