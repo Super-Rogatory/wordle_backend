@@ -23,8 +23,8 @@ def top10_wins():
     all_list = []
     for i in range(3):
         shard = i + 1
-        db = Database(sqlite3.connect(f"./db/stats_{shard}.db"))
-        db.attach("users", "./db/users.db")
+        db = Database(sqlite3.connect(f"{database_dir}stats_{shard}.db"))
+        db.attach("users", f"{database_dir}users.db")
         shard_top10[shard] = db.execute(
             "SELECT wins.wins, users.username FROM wins INNER JOIN users ON wins.guid=users.guid ORDER BY wins DESC LIMIT 10"
         ).fetchall()
@@ -42,8 +42,8 @@ def top10_streaks():
     all_list = []
     for i in range(3):
         shard = i + 1
-        db = Database(sqlite3.connect(f"./db/stats_{shard}.db"))
-        db.attach("users", "./db/users.db")
+        db = Database(sqlite3.connect(f"{database_dir}stats_{shard}.db"))
+        db.attach("users", f"{database_dir}users.db")
         shard_top10[shard] = db.execute(
             "SELECT streaks.streak, users.username FROM streaks INNER JOIN users ON streaks.guid=users.guid ORDER BY streak DESC LIMIT 10"
         ).fetchall()
