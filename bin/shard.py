@@ -50,7 +50,7 @@ def seed():
                 AS
                     SELECT
                         guid,
-                        COUNT(won)
+                        COUNT(won) AS wins
                     FROM
                         {tbl_name}
                     WHERE
