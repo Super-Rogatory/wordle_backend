@@ -12,7 +12,7 @@ rm traefik.tar.gz
 echo "export PROJ_PATH=$(pwd)" > ~/wordle.env && . ~/wordle.env
 
 # TODO: build standalone app
-# pyinstaller --onefile ./bin/Top10.py
+pyinstaller --onefile ./bin/Top10.py
 
 # start redis-server in background
 redis-server --daemonize yes
