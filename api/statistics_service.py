@@ -10,6 +10,8 @@ from utils import (
     filter_values,
 )
 from pydantic import BaseModel
+import redis
+import json
 
 
 # defines a valid game in request body
@@ -22,6 +24,12 @@ class Game(BaseModel):
 
 # Connect to necessary dependencies
 app = FastAPI()
+
+# connect to redis
+r = redis.Redis(
+    host="localhost", port=6379, db=0, charset="utf-8", decode_responses=True
+)
+
 # settings = Settings()
 users_db = start_connection("users")
 shard_connections = [
@@ -34,59 +42,24 @@ shard_connections = [
 sqlite3.register_converter("GUID", lambda b: uuid.UUID(bytes_le=b))
 sqlite3.register_adapter(uuid.UUID, lambda u: bytes(u.bytes_le))
 
+# pull leaderboard from redis
+@app.get("/top10/streaks")
+def top10_streaks():
+    top10streaks = r.zrevrange(name="streaks", start=0, end=9, withscores=True)
+    result = json.dumps(top10streaks)
+    top10 = json.loads(result)
+    return top10
+
+
+@app.get("/top10/wins")
+def top10_wins():
+    top10wins = r.zrevrange(name="wins", start=0, end=9, withscores=True)
+    result = json.dumps(top10wins)
+    top10 = json.loads(result)
+    return top10
+
+
 # every route connects to a db, depending on env
-@app.get("/top_ten_in_wins")
-async def get_top_ten_in_wins():
-    shard_scan_results = []
-    stats = []
-    try:
-        users_cur = users_db.cursor()
-        # for every shard get their top ten then use filter func to sort and filter
-        for (connection, _) in shard_connections:
-            cur = connection.cursor()
-            cur.execute("""SELECT * FROM wins ORDER BY "COUNT(won)" DESC LIMIT 10""")
-            for result in cur.fetchall():
-                shard_scan_results.append(result)
-        filtered_list = filter_values(shard_scan_results)  # utilizing helper function
-        # query each guid for the username that it is linked to
-        for (guid, wins) in filtered_list:
-            users_cur.execute(
-                f"SELECT username FROM users WHERE guid=:id", {"id": guid}
-            )
-            name = users_cur.fetchone()[0]
-            stats.append({"name": name, "wins": wins})
-        return stats
-    except Exception as e:
-        print(f"An error has occured! => {e}")
-
-
-@app.get("/top_ten_in_streaks")
-async def get_top_ten_in_streaks():
-    shard_scan_results = []
-    stats = []
-    try:
-        users_cur = users_db.cursor()
-        # for every shard get their top ten then use filter func to sort and filter
-        for (connection, _) in shard_connections:
-            cur = connection.cursor()
-            cur.execute(
-                """SELECT guid, streak FROM streaks ORDER BY streak DESC LIMIT 10"""
-            )
-            for result in cur.fetchall():
-                shard_scan_results.append(result)
-        filtered_list = filter_values(shard_scan_results)  # utilizing helper function
-        # query each guid for the username that it is linked to
-        for (guid, streak) in filtered_list:
-            users_cur.execute(
-                f"SELECT username FROM users WHERE guid=:id", {"id": guid}
-            )
-            name = users_cur.fetchone()[0]
-            stats.append({"name": name, "streak": streak})
-        return stats
-    except Exception as e:
-        print(f"An error has occured! => {e}")
-
-
 @app.get("/{username}")
 async def get_statistics(username: str):
     user_guid = -1
