@@ -223,12 +223,16 @@ async def new_game(username: str):
                 # since there is more logic here - for readability track index
                 break
 
-        cur.execute(f"SELECT * FROM {tbl_name} WHERE finished IS NULL")
+        cur.execute(
+            f"SELECT * FROM {tbl_name} WHERE finished IS NULL AND guid=:id",
+            {"id": user_guid},
+        )
         # this means there is emphasis on another service to "finish" any unfinished game by midnight (set a time stamp)
         is_finished = cur.fetchall()
         if is_finished != []:
-            return "Insert server logic to close game by midnight so that another one may open. (Not a part of project)."
-
+            return {
+                "detail": "Insert server logic to close game by midnight so that another one may open. (Not a part of project)."
+            }
         # generate random number
         while True:
             # keep generating random game_id until it is unique
