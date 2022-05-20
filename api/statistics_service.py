@@ -233,6 +233,7 @@ async def new_game(username: str):
             return {
                 "detail": "Insert server logic to close game by midnight so that another one may open. (Not a part of project)."
             }
+
         # generate random number
         while True:
             # keep generating random game_id until it is unique

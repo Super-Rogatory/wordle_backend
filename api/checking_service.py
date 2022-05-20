@@ -28,7 +28,11 @@ async def check_answer(answer: str):
 
     # Word is valid from this point on. | In production replace object with a small list [1,2,3]
     statuses = {1: "absent", 2: "present", 3: "correct"}
-    word_status = []  # list of objects. [{ "t", "present"}]
+    word_status = {
+        "correct": [],
+        "present": [],
+        "absent": [],
+    }  # list of objects. [{ "t", "present"}]
     index = 0
     isCorrect = False
 
@@ -37,11 +41,11 @@ async def check_answer(answer: str):
     else:
         for letter in answer:
             if letter == wordOTD[index]:
-                word_status.append({letter: statuses[3]})
+                word_status["correct"].append(letter)
             elif wordOTD.find(letter) != -1:
-                word_status.append({letter, statuses[2]})
+                word_status["present"].append(letter)
             else:
-                word_status.append({letter, statuses[1]})
+                word_status["absent"].append(letter)
             index = index + 1
     return {"answerResults": "Correct" if isCorrect else word_status}
 
