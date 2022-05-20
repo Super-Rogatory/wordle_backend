@@ -4,3 +4,4 @@ uvicorn
 multipledispatch 
 pydantic
 redis
+httpx
