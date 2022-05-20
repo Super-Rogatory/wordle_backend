@@ -14,7 +14,7 @@ id = 1
 # populates list of dictionaries
 with open(in_file) as word_list:
     words = []  # will populate depending on cl-argument
-    if filename == "answers":
+    if "answers" in filename:
         words = word_list.read().split(",")
         for word in words:
             obj = {}
@@ -26,7 +26,7 @@ with open(in_file) as word_list:
         # all of the other words will have a propertie of "currentWord" that is 0 or 1
         currentWordOfTheDay = random.randint(1, len(content))
         content[currentWordOfTheDay]["cur_word"] = 1
-    elif filename == "word_list":
+    elif "word_list" in filename:
         for word in word_list:
             obj = {}
             obj["id"] = id

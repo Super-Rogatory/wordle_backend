@@ -10,6 +10,7 @@ from utils import (
     filter_values,
 )
 from pydantic import BaseModel
+from random import randint
 import redis
 import json
 
@@ -187,5 +188,69 @@ async def game_result(username: str, game: Game):
         {"gid": game.game_id, "uid": user_guid},
     )
     res = cur.fetchone()
-
     return {"gameResults": res}
+
+
+@app.post("/new_game/{username}")
+async def new_game(username: str):
+    user_guid = -1
+    # try to find the user in the db. if cannot find - raise HTTPException.
+    try:
+        users_cur = users_db.cursor()
+        # find the user id from the username(since usname is unique)
+        users_cur.execute(
+            "SELECT guid FROM users WHERE username=:name", {"name": username}
+        )
+        result = users_cur.fetchone()
+        user_guid = result[0] if result != None else -1
+    except Exception as e:
+        print(f"An error has occured! => {e}")
+
+    # if user_guid is still -1, we did not find a user.
+    if type(user_guid) == int and user_guid == -1:
+        raise HTTPException(status_code=400, detail="User not found in database.")
+
+    try:
+        game_id = randint(1, 2_000_000)
+        # we're iterating through each (connection, tablename) in our shard connections list.
+        # as soon as we identify the user in one of the shards, break.
+        # we'll still have access to the connection and tbl_name from the moment looping stops
+        for (connection, tbl_name) in shard_connections:
+            cur = connection.cursor()
+            cur.execute(f"SELECT * FROM {tbl_name} WHERE guid=:id", {"id": user_guid})
+            # once you match the id to a shard, fetch data from db to be filtered
+            if cur.fetchall() != []:
+                # since there is more logic here - for readability track index
+                break
+
+        cur.execute(f"SELECT * FROM {tbl_name} WHERE finished IS NULL")
+        # this means there is emphasis on another service to "finish" any unfinished game by midnight (set a time stamp)
+        is_finished = cur.fetchall()
+        if is_finished != []:
+            return "Insert server logic to close game by midnight so that another one may open. (Not a part of project)."
+
+        # generate random number
+        while True:
+            # keep generating random game_id until it is unique
+            # cur comes from match loop ^
+            cur.execute(
+                f"SELECT * FROM {tbl_name} WHERE game_id=:potential_game_id AND guid=:uid",
+                {"potential_game_id": game_id, "uid": user_guid},
+            )
+            if cur.fetchall() == []:
+                break
+
+        # use random game id to start new game with finished empty, allows us to identify which games are complete later on.
+        cur.execute(
+            f"INSERT INTO {tbl_name} VALUES (:guid, :gid, NULL, :guesses, :won)",
+            {
+                "guid": user_guid,
+                "gid": game_id,
+                "guesses": 6,
+                "won": 0,
+            },
+        )
+        connection.commit()
+        return {"status": "new", "user_id": user_guid, "game_id": game_id}
+    except Exception as e:
+        print(f"An error has occured! => {e}")

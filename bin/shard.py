@@ -39,7 +39,7 @@ def seed():
                 CREATE TABLE IF NOT EXISTS {tbl_name} (
                     guid GUID,
                     game_id INTEGER NOT NULL,
-                    finished DATE DEFAULT CURRENT_TIMESTAMP,
+                    finished DATE,
                     guesses INTEGER,
                     won BOOLEAN,
                     PRIMARY KEY(guid, game_id)
