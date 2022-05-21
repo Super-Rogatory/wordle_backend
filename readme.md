@@ -17,7 +17,7 @@
 - [Uvicorn](https://www.uvicorn.org/)
 - [Sqlite-Utils](https://pypi.org/project/sqlite-utils/)
 - [MultipleDispatch](https://pypi.org/project/multipledispatch/)
-
+- [Redis](https://redis.io/)
 <!-- GETTING STARTED -->
 
 ## Getting Started
