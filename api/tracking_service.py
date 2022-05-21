@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from utils import validate_client
 import redis
 import json
+import uuid
 
 app = FastAPI()
 # start connection to redis server
@@ -10,7 +11,7 @@ r = redis.Redis(host="localhost", port=6379, db=0)
 
 # defines a new game in request body
 class Client(BaseModel):
-    user_id: int
+    user_id: uuid.UUID
     game_id: int
 
 
@@ -28,8 +29,8 @@ class Client(BaseModel):
 
 # Functionality for returning game status
 @app.get("/get_status")
-async def add_guess(user_id: int, game_id: int):
-    res = r.hmget(user_id, game_id)
+async def add_guess(user_id: uuid.UUID, game_id: int):
+    res = r.hmget(str(user_id), game_id)
     # if game is already played return error
     if res[0] == None:
         raise HTTPException(status_code=400, detail="User has not started this game.")
@@ -43,7 +44,7 @@ async def add_guess(user_id: int, game_id: int):
 @app.post("/start_game")
 async def start_game(client: Client):
     valid_user = validate_client(client)
-    res = r.hmget(client.user_id, client.game_id)
+    res = r.hmget(str(client.user_id), client.game_id)
     # if game is already played return error
     if res[0] != None or not valid_user:
         raise HTTPException(
@@ -53,7 +54,7 @@ async def start_game(client: Client):
 
     # create new game in json format so it can be set in redis
     new_game = {
-        "user_id": client.user_id,
+        "user_id": str(client.user_id),
         "guesses_left": 6,
         "words_guessed": [],
     }
@@ -61,7 +62,7 @@ async def start_game(client: Client):
 
     # set the new game object with user_id as the key
     r.hmset(
-        client.user_id,
+        str(client.user_id),
         {client.game_id: mapping},
     )
     return {f"game-{client.game_id}": new_game}
@@ -71,7 +72,7 @@ async def start_game(client: Client):
 @app.post("/guess")
 async def add_guess(guess: str, client: Client):
     valid_user = validate_client(client)
-    res = r.hmget(client.user_id, client.game_id)
+    res = r.hmget(str(client.user_id), client.game_id)
     # if game is already played return error
     if res[0] == None or not valid_user:
         raise HTTPException(
@@ -87,7 +88,7 @@ async def add_guess(guess: str, client: Client):
     # save changes
     mapping = json.dumps(game_information)
     r.hmset(
-        client.user_id,
+        str(client.user_id),
         {client.game_id: mapping},
     )
     return {f"game-{client.game_id}": game_information}

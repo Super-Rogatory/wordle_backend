@@ -1,3 +1,4 @@
+from datetime import date
 import sqlite3
 import uuid
 from fastapi import FastAPI, HTTPException
@@ -11,6 +12,7 @@ from utils import (
 )
 from pydantic import BaseModel
 from random import randint
+
 import redis
 import json
 
@@ -119,6 +121,46 @@ async def get_statistics(username: str):
         print(f"An error has occured! => {e}")
 
 
+@app.get("/get_stats/{id}")
+async def get_statistics_by_id(id: uuid.UUID):
+    query_results = []
+    try:
+        # for every shard look up the user_guid to see if you can find it in there.
+        for (connection, tbl_name) in shard_connections:
+            cur = connection.cursor()
+            cur.execute(f"SELECT * FROM {tbl_name} WHERE guid=:id", {"id": id})
+            # once you match the id to a shard, fetch data from db to be filtered
+            if cur.fetchall() != []:
+                cur.execute(
+                    f"""
+                        SELECT finished, guesses, won
+                        FROM {tbl_name}
+                        WHERE guid=:uid
+                        ORDER BY finished
+                    """,
+                    {"uid": id},
+                )
+                query_results = cur.fetchall()
+                break
+        # use helper functions to parse data instead of making extra calls to db
+        (cur_streak, max_streak) = get_streak(query_results)
+        guesses = get_guesses(query_results)
+        (win_percentage, games_played, games_won, avg_guesses) = analyze_guess_data(
+            guesses
+        )
+        return {
+            "currentStreak": cur_streak,
+            "maxStreak": max_streak,
+            "guesses": guesses,
+            "winPercentage": win_percentage,
+            "gamesPlayed": games_played,
+            "gamesWon": games_won,
+            "averageGuesses": avg_guesses,
+        }
+    except Exception as e:
+        print(f"An error has occured! => {e}")
+
+
 @app.post("/game_result/{username}")
 async def game_result(username: str, game: Game):
     user_guid = -1
@@ -191,9 +233,64 @@ async def game_result(username: str, game: Game):
     return {"gameResults": res}
 
 
+@app.post("/game_result/save/{id}")
+async def save_game(id: uuid.UUID, game: Game):
+    # locate the shard that contains the user information
+    try:
+        # we're iterating through each (connection, tablename) in our shard connections list.
+        # as soon as we identify the user in one of the shards, break.
+        # we'll still have access to the connection and tbl_name from the moment looping stops
+        for (connection, tbl_name) in shard_connections:
+            cur = connection.cursor()
+            cur.execute(f"SELECT * FROM {tbl_name} WHERE guid=:id", {"id": id})
+            # once you match the id to a shard, fetch data from db to be filtered
+            if cur.fetchall() != []:
+                # since there is more logic here - for readability track index
+                break
+
+    except Exception as e:
+        print(f"An error has occured! => {e}")
+        # cur comes from match loop ^
+    cur.execute(
+        f"SELECT * FROM {tbl_name} WHERE finished=:date_finished AND guid=:uid",
+        {"date_finished": game.finished, "uid": id},
+    )
+    # if there is a record with duplicate date attached to same user - break - error
+    if len(cur.fetchall()):
+        raise HTTPException(status_code=400, detail="Duplicate dates error.")
+
+    # insert new records in sharded games table
+    cur.execute(
+        f"""
+            UPDATE {tbl_name}
+            SET finished=:finished, won=:won, guesses=:guesses
+            WHERE finished IS NULL AND guid=:uid AND game_id=:id
+ 
+        """,
+        {
+            "uid": id,
+            "id": game.game_id,
+            "finished": game.finished,
+            "guesses": game.guesses,
+            "won": game.game_status,
+        },
+    )
+    connection.commit()
+    # retreive information after update to ensure it has updated.
+    cur.execute(
+        f"SELECT * FROM {tbl_name} WHERE game_id=:gid AND guid=:uid",
+        {"gid": game.game_id, "uid": id},
+    )
+    res = cur.fetchone()
+    print(res)
+    return {res}
+
+
 @app.post("/new_game/{username}")
 async def new_game(username: str):
     user_guid = -1
+    GUESSES = 3
+    WON_STATUS = 4
     # try to find the user in the db. if cannot find - raise HTTPException.
     try:
         users_cur = users_db.cursor()
@@ -222,12 +319,28 @@ async def new_game(username: str):
             if cur.fetchall() != []:
                 # since there is more logic here - for readability track index
                 break
+        # game_in_progress exists if there is a null date in game record, once record is finished the date becomes populated and defaults to finished_game
+        cur.execute(
+            f"SELECT * FROM {tbl_name} WHERE finished IS NULL AND guid=:id",
+            {"id": user_guid},
+        )
+        game_in_progress = cur.fetchall()
 
-        cur.execute(f"SELECT * FROM {tbl_name} WHERE finished IS NULL")
-        # this means there is emphasis on another service to "finish" any unfinished game by midnight (set a time stamp)
-        is_finished = cur.fetchall()
-        if is_finished != []:
-            return "Insert server logic to close game by midnight so that another one may open. (Not a part of project)."
+        cur.execute(
+            f"SELECT * FROM {tbl_name} WHERE finished=:date AND guid=:id",
+            {"date": date.today(), "id": user_guid},
+        )
+        # there should only ever be ONE game per user whose finished value is null, if we find an entry, state game in progress
+        finished_game = cur.fetchall()
+        # if there is a current game for the current date, return info object in different scenarios
+        if game_in_progress != []:
+            return {"status": "in-progress", "obj": game_in_progress}
+        if finished_game != []:
+            # 0 = first element. [3] refers to the number of guesses left. [4] refers to won status
+            if finished_game[0][WON_STATUS] == 0:
+                return {"status": "loss", "obj": finished_game}
+            else:
+                return {"status": "won", "obj": finished_game}
 
         # generate random number
         while True:

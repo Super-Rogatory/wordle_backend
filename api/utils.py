@@ -1,3 +1,4 @@
+import uuid
 from multipledispatch import dispatch
 import sqlite3
 import re
@@ -58,7 +59,7 @@ def validate_game_result(status, finished, guesses):
 # VALIDATE_CLIENT - makes sure valid user_id and game_id is entered
 def validate_client(client):
     isValid = True
-    if client.user_id <= 0 or client.game_id <= 0:
+    if type(client.user_id) != uuid.UUID or client.game_id <= 0:
         isValid = False
     return isValid
 
