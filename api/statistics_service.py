@@ -62,6 +62,36 @@ def top10_wins():
     return top10
 
 
+@app.get("/checkwin")
+async def check_win(user_id: uuid.UUID, game_id: int):
+    WON_STATUS = 4
+    # locate the shard that contains the user information
+    try:
+        # we're iterating through each (connection, tablename) in our shard connections list.
+        # as soon as we identify the user in one of the shards, break.
+        # we'll still have access to the connection and tbl_name from the moment looping stops
+        for (connection, tbl_name) in shard_connections:
+            cur = connection.cursor()
+            cur.execute(f"SELECT * FROM {tbl_name} WHERE guid=:id", {"id": user_id})
+            # once you match the id to a shard, fetch data from db to be filtered
+            if cur.fetchall() != []:
+                # since there is more logic here - for readability track index
+                break
+
+    except Exception as e:
+        print(f"An error has occured! => {e}")
+        # cur comes from match loop ^
+    cur.execute(
+        f"SELECT * FROM {tbl_name} WHERE game_id=:game_id",
+        {"game_id": game_id},
+    )
+
+    # if there is a record with duplicate date attached to same user - break - error
+    if cur.fetchall()[0][WON_STATUS] == 1:
+        return {"status": True}
+    return {"status": False}
+
+
 # every route connects to a db, depending on env
 @app.get("/{username}")
 async def get_statistics(username: str):
@@ -282,7 +312,6 @@ async def save_game(id: uuid.UUID, game: Game):
         {"gid": game.game_id, "uid": id},
     )
     res = cur.fetchone()
-    print(res)
     return {res}
 
 
