@@ -282,7 +282,6 @@ async def save_game(id: uuid.UUID, game: Game):
         {"gid": game.game_id, "uid": id},
     )
     res = cur.fetchone()
-    print(res)
     return {res}
 
 

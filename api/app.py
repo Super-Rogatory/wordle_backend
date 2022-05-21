@@ -76,25 +76,12 @@ async def new_guess(game_id: int, new_guess: NewGuessInfo):
             status_code=400, detail={"status": "invalid", "remaining": guesses_left}
         )
 
-    # Record the guess and update the number of guesses remaining
-    # create game_info object,for the body of post request
-    game_info = {"user_id": str(new_guess.user_id), "game_id": game_id}
-    # Using add_word function in tracking_service to handle recording the guess and returning number of guesses remaining
-    r = httpx.post(
-        f"http://127.0.0.1:9999/api/trackings/guess?guess={new_guess.guess}",
-        json=game_info,
-    )
-    # if user has no guesses left OR tries to play twice in a day.
-    if "detail" in r.json():
-        return "Thank you for playing Wordle! Come back tomorrow and play again! :)"
-
-    guesses_left = r.json()[f"game-{game_id}"]["guesses_left"]
-
     # Check to see if the guess is correct
     r = httpx.post(
         f"http://127.0.0.1:9999/api/checkings/checkanswer?answer={new_guess.guess}"
     )
     answer_res = r.json()["answerResults"]
+
     # TODO: if guesses_left is 0, save object as a LOSS, use the current date to update sql database, return sql object.
     # TODO: if guess is correct, save object as a WIN, use the current date to update sql database, return sql object.
     if answer_res == "Correct":
@@ -126,7 +113,21 @@ async def new_guess(game_id: int, new_guess: NewGuessInfo):
             "gamesWon": stats["gamesWon"],
             "averageGuesses": stats["averageGuesses"],
         }
-    elif guesses_left == 0:
+    # Record the guess and update the number of guesses remaining
+    # create game_info object,for the body of post request
+    game_info = {"user_id": str(new_guess.user_id), "game_id": game_id}
+    # Using add_word function in tracking_service to handle recording the guess and returning number of guesses remaining
+    r = httpx.post(
+        f"http://127.0.0.1:9999/api/trackings/guess?guess={new_guess.guess}",
+        json=game_info,
+    )
+    # if user has no guesses left OR tries to play twice in a day.
+    if "detail" in r.json():
+        return "Thank you for playing Wordle! Come back tomorrow and play again! :)"
+
+    guesses_left = r.json()[f"game-{game_id}"]["guesses_left"]
+
+    if guesses_left == 0:
         game_results = {
             "game_id": game_id,
             "finished": str(today),
