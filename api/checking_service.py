@@ -27,12 +27,11 @@ async def check_answer(answer: str):
         raise HTTPException(status_code=400, detail="Word is invalid.")
 
     # Word is valid from this point on. | In production replace object with a small list [1,2,3]
-    statuses = {1: "absent", 2: "present", 3: "correct"}
     word_status = {
         "correct": [],
         "present": [],
         "absent": [],
-    }  # list of objects. [{ "t", "present"}]
+    }
     index = 0
     isCorrect = False
 
