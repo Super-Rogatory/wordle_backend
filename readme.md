@@ -5,9 +5,9 @@
 ## Contributors
 
 - **Chukwudi Ikem**
+- **Madison Jordan**
 - **Ryan Broguiere**
-- **James Talavera**
-- **Jacob Nguyen**
+
 
 ### Built With
 
@@ -92,10 +92,7 @@ To get a local copy up and running follow these simple example steps.
 
 1. Travel to
 
-   - `checkings` http://127.0.0.1:9999/api/checkings/docs
-   - `statistics` http://127.0.0.1:9999/api/statistics/docs
-   - `validations` http://127.0.0.1:9999/api/validations/docs
-   - `trackings` http://127.0.0.1:9999/api/trackings/docs
+   - `app` http://127.0.0.1:8080/docs
 
    _depends on the values inputted for which service you wish to test_
 
