@@ -92,11 +92,8 @@ To get a local copy up and running follow these simple example steps.
 
 1. Travel to
 
-   - `checkings` http://127.0.0.1:9999/api/checkings/docs
-   - `statistics` http://127.0.0.1:9999/api/statistics/docs
-   - `validations` http://127.0.0.1:9999/api/validations/docs
-   - `trackings` http://127.0.0.1:9999/api/trackings/docs
+   - `app` http://127.0.0.1:8080/docs
 
    _depends on the values inputted for which service you wish to test_
 
-2. Once there you can test out the routes!
+2. Once there you can test out the Wordle routes!
