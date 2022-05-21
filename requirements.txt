@@ -5,3 +5,4 @@ multipledispatch
 pydantic
 redis
 httpx
+asyncio
