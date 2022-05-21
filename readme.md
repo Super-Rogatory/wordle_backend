@@ -5,9 +5,9 @@
 ## Contributors
 
 - **Chukwudi Ikem**
-- **Madison Jordan**
+- **Ryan Broguiere**
 - **James Talavera**
-- **Jose Hernandez**
+- **Jacob Nguyen**
 
 ### Built With
 

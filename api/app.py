@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from datetime import date
 import httpx
 import uuid
+import asyncio
 
 
 app = FastAPI()
@@ -53,7 +54,7 @@ async def create_new_game(new_game: NewGameInfo):
 async def new_guess(game_id: int, new_guess: NewGuessInfo):
     # get current date
     today = date.today()
-
+    
     # Verify that the guess is a word allowed by the dictionary
     # http://127.0.0.1:9999/api/validations/checkword?name=table
     # Make an API call to check word in order to see if the guess is valid
@@ -105,16 +106,19 @@ async def new_guess(game_id: int, new_guess: NewGuessInfo):
             "guesses": guesses_left,
             "game_status": True,
         }
+        await asyncio.gather(
         # update sql database
         r = httpx.post(
             f"http://127.0.0.1:9999/api/statistics/game_result/save/{new_guess.user_id}",
             json=game_results,
-        )
+        ))
         # get new user stats
         r = httpx.get(
             f"http://127.0.0.1:9999/api/statistics/get_stats/{new_guess.user_id}"
         )
+        
         stats = r.json()
+        
         return {
             "status": "win",
             "remaining": guesses_left,
@@ -154,5 +158,6 @@ async def new_guess(game_id: int, new_guess: NewGuessInfo):
             "gamesWon": stats["gamesWon"],
             "averageGuesses": stats["averageGuesses"],
         }
+        
     # if have gotten to this point, the user has guesses remaining, and has not yet won!
     return {"status": "incorrect", "remaining": guesses_left, "letters": answer_res}
