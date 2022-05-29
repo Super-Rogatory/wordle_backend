@@ -15,6 +15,7 @@
 - [Foreman](https://pypi.org/project/foreman/)
 - [SQLite](https://www.sqlite.org/index.html)
 - [Uvicorn](https://www.uvicorn.org/)
+- [Traefik](https://doc.traefik.io/traefik/)
 - [Sqlite-Utils](https://pypi.org/project/sqlite-utils/)
 - [MultipleDispatch](https://pypi.org/project/multipledispatch/)
 - [Redis](https://redis.io/)
